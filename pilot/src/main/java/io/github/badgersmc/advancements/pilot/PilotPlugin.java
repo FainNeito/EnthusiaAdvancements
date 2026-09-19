@@ -58,8 +58,14 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             Map<String, BaseAdvancement> nodes = new LinkedHashMap<>();
             for (Node definition : definitions) {
                 Advancement parent = definition.parentKey() == null ? root : nodes.get(definition.parentKey());
+                ItemStack nodeIcon = new ItemStack(definition.icon());
+                if (definition.customModelData() != null) {
+                    var meta = nodeIcon.getItemMeta();
+                    meta.setCustomModelData(definition.customModelData());
+                    nodeIcon.setItemMeta(meta);
+                }
                 BaseAdvancement node = new BaseAdvancement(definition.key(),
-                    new AdvancementDisplay(definition.icon(), definition.title(), AdvancementFrameType.valueOf(definition.frame()),
+                    new AdvancementDisplay(nodeIcon, definition.title(), AdvancementFrameType.valueOf(definition.frame()),
                         false, false, definition.x(), definition.y(), definition.description()), parent, 100);
                 nodes.put(definition.key(), node);
             }

@@ -25,9 +25,18 @@ class ProjectionContractTest {
         var node = new ProjectionService.Node("test", null, "x", lines, Material.CLOCK, "GOAL", 1, 2);
         lines.clear();
         assertEquals(2, node.description().size());
+        assertNull(node.customModelData());
+
+        var custom = new ProjectionService.Node(
+            "custom", null, "x", List.of(), Material.WRITABLE_BOOK, 815002, "TASK", 1, 2);
+        assertEquals(815002, custom.customModelData());
+        assertThrows(IllegalArgumentException.class, () -> new ProjectionService.Node(
+            "bad-custom", null, "x", List.of(), Material.PAPER, 0, "TASK", 1, 2));
+
         String source = Files.readString(Path.of("src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"));
         assertFalse(source.contains("dispatchCommand("));
         assertFalse(source.contains("giveReward("));
+        assertTrue(source.contains("setCustomModelData(definition.customModelData())"));
         assertTrue(source.contains("false, false"), "Projection displays must never automatically celebrate");
     }
 }
