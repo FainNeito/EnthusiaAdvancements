@@ -10,12 +10,22 @@ import org.bukkit.plugin.Plugin;
 /** Display-only API. Providers remain authoritative for progress and reward claims. */
 public interface ProjectionService {
     record Node(String key, String parentKey, String title, List<String> description,
-                Material icon, Integer customModelData, String frame, float x, float y) {
+                Material icon, Integer customModelData, String itemModel,
+                String frame, float x, float y) {
         public Node(String key, String parentKey, String title, List<String> description,
                     Material icon, String frame, float x, float y) {
-            this(key, parentKey, title, description, icon, null, frame, x, y);
+            this(key, parentKey, title, description, icon, null, null, frame, x, y);
         }
 
+        public Node(String key, String parentKey, String title, List<String> description,
+                    Material icon, Integer customModelData, String frame, float x, float y) {
+            this(key, parentKey, title, description, icon, customModelData, null, frame, x, y);
+        }
+
+        public Node(String key, String parentKey, String title, List<String> description,
+                    Material icon, String itemModel, String frame, float x, float y) {
+            this(key, parentKey, title, description, icon, null, itemModel, frame, x, y);
+        }
         public Node {
             if (key == null || !key.matches("[a-z0-9/._-]+") || "root".equals(key))
                 throw new IllegalArgumentException("Invalid or reserved advancement key: " + key);
@@ -24,9 +34,13 @@ public interface ProjectionService {
             if (icon == null) icon = Material.CLOCK;
             if (customModelData != null && customModelData <= 0)
                 throw new IllegalArgumentException("Invalid custom model data");
-            if (!List.of("TASK", "GOAL", "CHALLENGE").contains(frame)) throw new IllegalArgumentException("Invalid frame");
+            if (itemModel != null && !itemModel.matches("[a-z0-9_.-]+:[a-z0-9/._-]+"))
+                throw new IllegalArgumentException("Invalid item model: " + itemModel);
+            if (!List.of("TASK", "GOAL", "CHALLENGE").contains(frame))
+                throw new IllegalArgumentException("Invalid frame");
         }
     }
+
     void registerTree(Plugin owner, String namespace, ItemStack icon, List<Node> nodes);
     void removeTree(Plugin owner, String namespace);
     boolean ready(Player player);

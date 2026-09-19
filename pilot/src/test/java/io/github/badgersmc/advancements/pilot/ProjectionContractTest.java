@@ -33,10 +33,19 @@ class ProjectionContractTest {
         assertThrows(IllegalArgumentException.class, () -> new ProjectionService.Node(
             "bad-custom", null, "x", List.of(), Material.PAPER, 0, "TASK", 1, 2));
 
+        var itemModel = new ProjectionService.Node(
+            "item-model", null, "x", List.of(), Material.WRITABLE_BOOK,
+            "enthusia:journal_quill", "TASK", 1, 2);
+        assertEquals("enthusia:journal_quill", itemModel.itemModel());
+        assertThrows(IllegalArgumentException.class, () -> new ProjectionService.Node(
+            "bad-item-model", null, "x", List.of(), Material.PAPER,
+            "Bad Namespace", "TASK", 1, 2));
+
         String source = Files.readString(Path.of("src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"));
         assertFalse(source.contains("dispatchCommand("));
         assertFalse(source.contains("giveReward("));
         assertTrue(source.contains("setCustomModelData(definition.customModelData())"));
+        assertTrue(source.contains("setItemModel(itemModel)"));
         assertTrue(source.contains("false, false"), "Projection displays must never automatically celebrate");
     }
 }

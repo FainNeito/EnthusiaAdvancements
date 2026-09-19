@@ -59,9 +59,20 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             for (Node definition : definitions) {
                 Advancement parent = definition.parentKey() == null ? root : nodes.get(definition.parentKey());
                 ItemStack nodeIcon = new ItemStack(definition.icon());
-                if (definition.customModelData() != null) {
+                if (definition.customModelData() != null || definition.itemModel() != null) {
                     var meta = nodeIcon.getItemMeta();
-                    meta.setCustomModelData(definition.customModelData());
+                    if (definition.customModelData() != null) {
+                        meta.setCustomModelData(definition.customModelData());
+                    }
+                    if (definition.itemModel() != null) {
+                        org.bukkit.NamespacedKey itemModel =
+                            org.bukkit.NamespacedKey.fromString(definition.itemModel());
+                        if (itemModel == null) {
+                            throw new IllegalArgumentException(
+                                "Invalid item model: " + definition.itemModel());
+                        }
+                        meta.setItemModel(itemModel);
+                    }
                     nodeIcon.setItemMeta(meta);
                 }
                 BaseAdvancement node = new BaseAdvancement(definition.key(),
