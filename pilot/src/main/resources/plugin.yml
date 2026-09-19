@@ -1,5 +1,5 @@
 name: EnthusiaAdvancements
-version: 1.0.0-pilot.1
+version: 1.0.0-pilot.4
 main: io.github.badgersmc.advancements.pilot.PilotPlugin
 api-version: '26.2'
 depend: [UltimateAdvancementAPI]

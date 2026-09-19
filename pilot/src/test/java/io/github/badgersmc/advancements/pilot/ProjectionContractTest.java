@@ -28,6 +28,7 @@ class ProjectionContractTest {
         String source = Files.readString(Path.of("src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"));
         assertFalse(source.contains("dispatchCommand("));
         assertFalse(source.contains("giveReward("));
-        assertTrue(source.contains("false, false"), "Projection displays must never automatically celebrate");
+        assertEquals(2, source.split("false, false", -1).length - 1,
+            "Both root and child displays must disable automatic toast and chat");
     }
 }

@@ -23,6 +23,15 @@ public interface ProjectionService {
     void registerTree(Plugin owner, String namespace, ItemStack icon, List<Node> nodes);
     void removeTree(Plugin owner, String namespace);
     boolean ready(Player player);
-    void project(String namespace, Player player, Map<String, Integer> progress);
-    void celebrate(String namespace, Player player, String key);
+    void project(Plugin owner, String namespace, Player player, Map<String, Integer> progress);
+    void celebrate(Plugin owner, String namespace, Player player, String key);
+    /** Legacy entry points reject ownerless writes rather than bypassing namespace ownership. */
+    @Deprecated
+    default void project(String namespace, Player player, Map<String, Integer> progress) {
+        throw new UnsupportedOperationException("Projection requires the registered owner; update the provider plugin.");
+    }
+    @Deprecated
+    default void celebrate(String namespace, Player player, String key) {
+        throw new UnsupportedOperationException("Celebration requires the registered owner; update the provider plugin.");
+    }
 }

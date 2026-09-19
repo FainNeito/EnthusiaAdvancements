@@ -38,6 +38,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
     }
     @Override public void registerTree(Plugin owner, String namespace, ItemStack icon, List<Node> definitions) {
         mainThread();
+        java.util.Objects.requireNonNull(owner, "Missing owner");
         Tree existing = trees.get(namespace);
         if (existing != null && existing.owner() != owner) throw new IllegalStateException("Namespace already owned");
         // Validate before replacing a visible tree.
@@ -82,13 +83,16 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         // Never project one player's personal completion into a shared UAA team.
         return player.isOnline() && api.isLoaded(player) && api.getTeamProgression(player).getSize() == 1;
     }
-    @Override public void project(String namespace, Player player, Map<String, Integer> progress) {
+    @Override public void project(Plugin owner, String namespace, Player player, Map<String, Integer> progress) {
         mainThread();
-        Tree tree = trees.get(namespace);
-        if (tree == null || !ready(player)) return;
+        Tree tree = ownedTree(owner, namespace);
+        if (tree == null) return;
+        // Snapshot and validate every entry before granting the root, showing a tab, or changing nodes.
+        Map<String, Integer> checked = checkedProgress(progress);
+        if (!ready(player)) return;
         if (!tree.root().isGranted(player)) tree.root().grant(player, false);
         if (!tree.tab().isShownTo(player)) tree.tab().showTab(player);
-        for (var entry : progress.entrySet()) {
+        for (var entry : checked.entrySet()) {
             BaseAdvancement node = tree.nodes().get(entry.getKey());
             int value = entry.getValue();
             if (node != null && value >= 0 && value <= 1000) {
@@ -97,13 +101,31 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             }
         }
     }
+    private Tree ownedTree(Plugin owner, String namespace) {
+        if (owner == null) throw new IllegalArgumentException("Missing projection owner");
+        Tree tree = trees.get(namespace);
+        if (tree != null && tree.owner() != owner)
+            throw new IllegalArgumentException("Namespace is owned by a different provider: " + namespace);
+        return tree;
+    }
+    static Map<String, Integer> checkedProgress(Map<String, Integer> progress) {
+        if (progress == null) throw new IllegalArgumentException("Missing progress map");
+        Map<String, Integer> checked = new LinkedHashMap<>();
+        for (var entry : progress.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null)
+                throw new IllegalArgumentException("Progress keys and values must not be null");
+            checked.put(entry.getKey(), entry.getValue());
+        }
+        // Unknown keys and unavailable/out-of-range values keep their existing skip behavior.
+        return Map.copyOf(checked);
+    }
     static int clientProgress(int verifiedValue) {
         if (verifiedValue < 0 || verifiedValue > 1000) throw new IllegalArgumentException("Invalid progress");
         return verifiedValue == 1000 ? 100 : Math.min(99, verifiedValue / 10);
     }
-    @Override public void celebrate(String namespace, Player player, String key) {
+    @Override public void celebrate(Plugin owner, String namespace, Player player, String key) {
         mainThread();
-        Tree tree = trees.get(namespace);
+        Tree tree = ownedTree(owner, namespace);
         if (tree == null || !ready(player)) return;
         BaseAdvancement node = tree.nodes().get(key);
         if (node == null || !node.isGranted(player)) return;
