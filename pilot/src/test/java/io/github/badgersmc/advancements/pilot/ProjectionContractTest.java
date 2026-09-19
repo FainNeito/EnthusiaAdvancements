@@ -46,6 +46,7 @@ class ProjectionContractTest {
         assertFalse(source.contains("giveReward("));
         assertTrue(source.contains("setCustomModelData(definition.customModelData())"));
         assertTrue(source.contains("setItemModel(itemModel)"));
-        assertTrue(source.contains("false, false"), "Projection displays must never automatically celebrate");
+        assertEquals(2, source.split("false, false", -1).length - 1,
+            "Both root and child displays must disable automatic toast and chat");
     }
 }
