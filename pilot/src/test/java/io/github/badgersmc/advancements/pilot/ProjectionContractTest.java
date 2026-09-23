@@ -25,48 +25,42 @@ class ProjectionContractTest {
         );
     }
 
-    @Test
-    void invalidKeysAndFramesAreRejected() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new ProjectionService.Node(
-                "root",
-                null,
-                "x",
-                List.of(),
-                Material.CLOCK,
-                "TASK",
-                1,
-                0
-            )
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new ProjectionService.Node(
-                "has spaces",
-                null,
-                "x",
-                List.of(),
-                Material.CLOCK,
-                "TASK",
-                1,
-                0
-            )
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new ProjectionService.Node(
-                "valid",
-                null,
-                "x",
-                List.of(),
-                Material.CLOCK,
-                "UNKNOWN",
-                1,
-                0
-            )
+    private static ProjectionService.Node node(String key, String frame) {
+        return new ProjectionService.Node(
+            key,
+            null,
+            "x",
+            List.of(),
+            Material.CLOCK,
+            frame,
+            1,
+            0
         );
     }
 
     @Test
-    void descriptionsAreCopiedAndNoRewardExecutorIsPresent() throws Exception {
+    void reservedKeyIsRejected() {
+        assertThrows(IllegalArgumentException.class, () ->
+            node("root", "TASK")
+        );
+    }
+
+    @Test
+    void spacedKeyIsRejected() {
+        assertThrows(IllegalArgumentException.class, () ->
+            node("has spaces", "TASK")
+        );
+    }
+
+    @Test
+    void unknownFrameIsRejected() {
+        assertThrows(IllegalArgumentException.class, () ->
+            node("valid", "UNKNOWN")
+        );
+    }
+
+    @Test
+    void descriptionsAreCopied() {
         var lines = new java.util.ArrayList<>(List.of("Requirement", "Reward"));
         var node = new ProjectionService.Node(
             "test",
@@ -81,7 +75,10 @@ class ProjectionContractTest {
         lines.clear();
         assertEquals(2, node.description().size());
         assertNull(node.customModelData());
+    }
 
+    @Test
+    void customModelDataIsValidated() {
         var custom = new ProjectionService.Node(
             "custom",
             null,
@@ -107,7 +104,10 @@ class ProjectionContractTest {
                 2
             )
         );
+    }
 
+    @Test
+    void itemModelIsValidated() {
         var itemModel = new ProjectionService.Node(
             "item-model",
             null,
@@ -133,7 +133,10 @@ class ProjectionContractTest {
                 2
             )
         );
+    }
 
+    @Test
+    void projectionSourceCannotExecuteRewardsOrAutoAnnounce() throws Exception {
         String source = Files.readString(
             Path.of(
                 "src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"
@@ -145,10 +148,16 @@ class ProjectionContractTest {
             source.contains("setCustomModelData(definition.customModelData())")
         );
         assertTrue(source.contains("setItemModel(itemModel)"));
-        var automaticAnnouncements = java.util.regex.Pattern.compile(
+        var announcements = java.util.regex.Pattern.compile(
             "false\\s*,\\s*false"
-        ).matcher(source).results().count();
-        assertEquals(2, automaticAnnouncements,
-            "Both root and child displays must disable automatic toast and chat");
+        )
+            .matcher(source)
+            .results()
+            .count();
+        assertEquals(
+            2,
+            announcements,
+            "Root and child displays must disable automatic toast and chat"
+        );
     }
 }

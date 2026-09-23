@@ -16,6 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -72,27 +73,46 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         mainThread();
         Objects.requireNonNull(owner, "Missing owner");
         Tree existing = trees.get(namespace);
-        if (existing != null && existing.owner() != owner) {
-            throw new IllegalStateException("Namespace already owned");
-        }
+        assertTreeOwner(existing, owner);
         validateDefinitions(definitions);
-        if (existing != null) removeTree(owner, namespace);
+        replaceExistingTree(owner, namespace, existing);
         AdvancementTab tab = api.createAdvancementTab(namespace);
         try {
-            RootAdvancement root = rootAdvancement(tab, icon);
-            Map<String, BaseAdvancement> nodes = new LinkedHashMap<>();
-            for (Node definition : definitions) {
-                nodes.put(
-                    definition.key(),
-                    createNode(definition, root, nodes)
-                );
-            }
-            tab.registerAdvancements(root, new HashSet<>(nodes.values()));
-            trees.put(namespace, new Tree(owner, tab, root, nodes));
+            registerDefinitions(owner, namespace, icon, definitions, tab);
         } catch (RuntimeException ex) {
             api.unregisterAdvancementTab(namespace);
             throw ex;
         }
+    }
+
+    private static void assertTreeOwner(Tree existing, Plugin owner) {
+        if (existing != null && existing.owner() != owner) {
+            throw new IllegalStateException("Namespace already owned");
+        }
+    }
+
+    private void replaceExistingTree(
+        Plugin owner,
+        String namespace,
+        Tree existing
+    ) {
+        if (existing != null) removeTree(owner, namespace);
+    }
+
+    private void registerDefinitions(
+        Plugin owner,
+        String namespace,
+        ItemStack icon,
+        List<Node> definitions,
+        AdvancementTab tab
+    ) {
+        RootAdvancement root = rootAdvancement(tab, icon);
+        Map<String, BaseAdvancement> nodes = new LinkedHashMap<>();
+        for (Node definition : definitions) {
+            nodes.put(definition.key(), createNode(definition, root, nodes));
+        }
+        tab.registerAdvancements(root, new HashSet<>(nodes.values()));
+        trees.put(namespace, new Tree(owner, tab, root, nodes));
     }
 
     private static void validateDefinitions(List<Node> definitions) {
@@ -123,21 +143,25 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         return new RootAdvancement(
             tab,
             "root",
-            new AdvancementDisplay(
-                icon,
-                "Enthusia",
-                AdvancementFrameType.TASK,
-                false,
-                false,
-                0,
-                0,
-                List.of(
-                    "Your Enthusia challenges",
-                    "View requirements and rewards here.",
-                    "Claim earned rewards with /rewards."
-                )
-            ),
+            rootDisplay(icon),
             "minecraft:textures/block/stone.png"
+        );
+    }
+
+    private static AdvancementDisplay rootDisplay(ItemStack icon) {
+        return new AdvancementDisplay(
+            icon,
+            "Enthusia",
+            AdvancementFrameType.TASK,
+            false,
+            false,
+            0,
+            0,
+            List.of(
+                "Your Enthusia challenges",
+                "View requirements and rewards here.",
+                "Claim earned rewards with /rewards."
+            )
         );
     }
 
@@ -152,18 +176,28 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
                 : nodes.get(definition.parentKey());
         return new BaseAdvancement(
             definition.key(),
-            new AdvancementDisplay(
-                createIcon(definition),
-                definition.title(),
-                AdvancementFrameType.valueOf(definition.frame()),
-                false,
-                false,
-                definition.x(),
-                definition.y(),
-                definition.description()
-            ),
+            nodeDisplay(definition),
             parent,
             100
+        );
+    }
+
+    private static AdvancementDisplay nodeDisplay(Node definition) {
+        AdvancementFrameType frame = switch (definition.frame()) {
+            case "TASK" -> AdvancementFrameType.TASK;
+            case "GOAL" -> AdvancementFrameType.GOAL;
+            case "CHALLENGE" -> AdvancementFrameType.CHALLENGE;
+            default -> throw new IllegalArgumentException("Invalid frame");
+        };
+        return new AdvancementDisplay(
+            createIcon(definition),
+            definition.title(),
+            frame,
+            false,
+            false,
+            definition.x(),
+            definition.y(),
+            definition.description()
         );
     }
 
@@ -175,23 +209,30 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         ) {
             return icon;
         }
-        var meta = icon.getItemMeta();
+        ItemMeta meta = icon.getItemMeta();
+        applyCustomModelData(definition, meta);
+        applyItemModel(definition, meta);
+        icon.setItemMeta(meta);
+        return icon;
+    }
+
+    private static void applyCustomModelData(Node definition, ItemMeta meta) {
         if (definition.customModelData() != null) {
             meta.setCustomModelData(definition.customModelData());
         }
-        if (definition.itemModel() != null) {
-            NamespacedKey itemModel = NamespacedKey.fromString(
-                definition.itemModel()
+    }
+
+    private static void applyItemModel(Node definition, ItemMeta meta) {
+        if (definition.itemModel() == null) return;
+        NamespacedKey itemModel = NamespacedKey.fromString(
+            definition.itemModel()
+        );
+        if (itemModel == null) {
+            throw new IllegalArgumentException(
+                "Invalid item model: " + definition.itemModel()
             );
-            if (itemModel == null) {
-                throw new IllegalArgumentException(
-                    "Invalid item model: " + definition.itemModel()
-                );
-            }
-            meta.setItemModel(itemModel);
         }
-        icon.setItemMeta(meta);
-        return icon;
+        meta.setItemModel(itemModel);
     }
 
     @Override
@@ -227,11 +268,15 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         // Snapshot and validate every entry before granting the root, showing a tab, or changing nodes.
         Map<String, Integer> checked = checkedProgress(progress);
         if (!ready(player)) return;
-        if (!tree.root().isGranted(player)) tree.root().grant(player, false);
-        if (!tree.tab().isShownTo(player)) tree.tab().showTab(player);
+        showTree(tree, player);
         for (var entry : checked.entrySet()) {
             projectNode(tree, player, entry.getKey(), entry.getValue());
         }
+    }
+
+    private static void showTree(Tree tree, Player player) {
+        if (!tree.root().isGranted(player)) tree.root().grant(player, false);
+        if (!tree.tab().isShownTo(player)) tree.tab().showTab(player);
     }
 
     private static void projectNode(

@@ -19,6 +19,7 @@ import com.fren_gor.ultimateAdvancementAPI.UltimateAdvancementAPI;
 import com.fren_gor.ultimateAdvancementAPI.advancement.BaseAdvancement;
 import com.fren_gor.ultimateAdvancementAPI.advancement.RootAdvancement;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.bukkit.Bukkit;
@@ -51,7 +52,10 @@ class ProjectionBoundaryTest {
         when(player.isOnline()).thenReturn(true);
         when(api.isLoaded(player)).thenReturn(true);
         when(api.getTeamProgression(player).getSize()).thenReturn(1);
-        Class<?> type = Class.forName(PilotPlugin.class.getName() + "$Tree");
+        Class<?> type = Arrays.stream(PilotPlugin.class.getDeclaredClasses())
+            .filter(candidate -> candidate.getSimpleName().equals("Tree"))
+            .findFirst()
+            .orElseThrow();
         var constructor = type.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
         Object tree = constructor.newInstance(
