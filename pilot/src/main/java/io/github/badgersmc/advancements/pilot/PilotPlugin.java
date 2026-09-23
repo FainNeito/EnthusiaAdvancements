@@ -74,11 +74,11 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Objects.requireNonNull(owner, "Missing owner");
         Tree existing = trees.get(namespace);
         assertTreeOwner(existing, owner);
-        validateDefinitions(definitions);
+        ProjectionChecks.validateDefinitions(definitions);
         replaceExistingTree(owner, namespace, existing);
         AdvancementTab tab = api.createAdvancementTab(namespace);
         try {
-            registerDefinitions(owner, namespace, icon, definitions, tab);
+            trees.put(namespace, registerDefinitions(owner, icon, definitions, tab));
         } catch (RuntimeException ex) {
             api.unregisterAdvancementTab(namespace);
             throw ex;
@@ -99,9 +99,8 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         if (existing != null) removeTree(owner, namespace);
     }
 
-    private void registerDefinitions(
+    private static Tree registerDefinitions(
         Plugin owner,
-        String namespace,
         ItemStack icon,
         List<Node> definitions,
         AdvancementTab tab
@@ -112,27 +111,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             nodes.put(definition.key(), createNode(definition, root, nodes));
         }
         tab.registerAdvancements(root, new HashSet<>(nodes.values()));
-        trees.put(namespace, new Tree(owner, tab, root, nodes));
-    }
-
-    private static void validateDefinitions(List<Node> definitions) {
-        // Validate before replacing a visible tree.
-        var keys = new HashSet<String>();
-        for (Node definition : definitions) {
-            if (!keys.add(definition.key())) {
-                throw new IllegalArgumentException(
-                    "Duplicate key: " + definition.key()
-                );
-            }
-            if (
-                definition.parentKey() != null &&
-                !keys.contains(definition.parentKey())
-            ) {
-                throw new IllegalArgumentException(
-                    "Parent must precede child: " + definition.key()
-                );
-            }
-        }
+        return new Tree(owner, tab, root, nodes);
     }
 
     private static RootAdvancement rootAdvancement(
@@ -266,7 +245,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Tree tree = ownedTree(owner, namespace);
         if (tree == null) return;
         // Snapshot and validate every entry before granting the root, showing a tab, or changing nodes.
-        Map<String, Integer> checked = checkedProgress(progress);
+        Map<String, Integer> checked = ProjectionChecks.checkedProgress(progress);
         if (!ready(player)) return;
         showTree(tree, player);
         for (var entry : checked.entrySet()) {
@@ -307,27 +286,11 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
     }
 
     static Map<String, Integer> checkedProgress(Map<String, Integer> progress) {
-        if (progress == null) throw new IllegalArgumentException(
-            "Missing progress map"
-        );
-        Map<String, Integer> checked = new LinkedHashMap<>();
-        for (var entry : progress.entrySet()) {
-            if (
-                entry.getKey() == null || entry.getValue() == null
-            ) throw new IllegalArgumentException(
-                "Progress keys and values must not be null"
-            );
-            checked.put(entry.getKey(), entry.getValue());
-        }
-        // Unknown keys and unavailable/out-of-range values keep their existing skip behavior.
-        return Map.copyOf(checked);
+        return ProjectionChecks.checkedProgress(progress);
     }
 
     static int clientProgress(int verifiedValue) {
-        if (
-            verifiedValue < 0 || verifiedValue > 1000
-        ) throw new IllegalArgumentException("Invalid progress");
-        return verifiedValue == 1000 ? 100 : Math.min(99, verifiedValue / 10);
+        return ProjectionChecks.clientProgress(verifiedValue);
     }
 
     @Override

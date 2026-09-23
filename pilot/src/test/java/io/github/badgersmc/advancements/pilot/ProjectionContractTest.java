@@ -78,7 +78,7 @@ class ProjectionContractTest {
     }
 
     @Test
-    void customModelDataIsValidated() {
+    void customModelDataIsAccepted() {
         var custom = new ProjectionService.Node(
             "custom",
             null,
@@ -91,6 +91,10 @@ class ProjectionContractTest {
             2
         );
         assertEquals(815002, custom.customModelData());
+    }
+
+    @Test
+    void invalidCustomModelDataIsRejected() {
         assertThrows(IllegalArgumentException.class, () ->
             new ProjectionService.Node(
                 "bad-custom",
@@ -107,7 +111,7 @@ class ProjectionContractTest {
     }
 
     @Test
-    void itemModelIsValidated() {
+    void itemModelIsAccepted() {
         var itemModel = new ProjectionService.Node(
             "item-model",
             null,
@@ -120,6 +124,10 @@ class ProjectionContractTest {
             2
         );
         assertEquals("enthusia:journal_quill", itemModel.itemModel());
+    }
+
+    @Test
+    void invalidItemModelIsRejected() {
         assertThrows(IllegalArgumentException.class, () ->
             new ProjectionService.Node(
                 "bad-item-model",
@@ -136,18 +144,24 @@ class ProjectionContractTest {
     }
 
     @Test
-    void projectionSourceCannotExecuteRewardsOrAutoAnnounce() throws Exception {
-        String source = Files.readString(
-            Path.of(
-                "src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"
-            )
-        );
+    void projectionSourceCannotExecuteRewards() throws Exception {
+        String source = pilotSource();
         assertFalse(source.contains("dispatchCommand("));
         assertFalse(source.contains("giveReward("));
+    }
+
+    @Test
+    void projectionSourceUsesConfiguredIcons() throws Exception {
+        String source = pilotSource();
         assertTrue(
             source.contains("setCustomModelData(definition.customModelData())")
         );
         assertTrue(source.contains("setItemModel(itemModel)"));
+    }
+
+    @Test
+    void projectionSourceDisablesAutomaticAnnouncements() throws Exception {
+        String source = pilotSource();
         var announcements = java.util.regex.Pattern.compile(
             "false\\s*,\\s*false"
         )
@@ -159,5 +173,11 @@ class ProjectionContractTest {
             announcements,
             "Root and child displays must disable automatic toast and chat"
         );
+    }
+
+    private static String pilotSource() throws Exception {
+        return Files.readString(Path.of(
+            "src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"
+        ));
     }
 }
