@@ -25,9 +25,27 @@ class ProjectionContractTest {
         var node = new ProjectionService.Node("test", null, "x", lines, Material.CLOCK, "GOAL", 1, 2);
         lines.clear();
         assertEquals(2, node.description().size());
+        assertNull(node.customModelData());
+
+        var custom = new ProjectionService.Node(
+            "custom", null, "x", List.of(), Material.WRITABLE_BOOK, 815002, "TASK", 1, 2);
+        assertEquals(815002, custom.customModelData());
+        assertThrows(IllegalArgumentException.class, () -> new ProjectionService.Node(
+            "bad-custom", null, "x", List.of(), Material.PAPER, 0, "TASK", 1, 2));
+
+        var itemModel = new ProjectionService.Node(
+            "item-model", null, "x", List.of(), Material.WRITABLE_BOOK,
+            "enthusia:journal_quill", "TASK", 1, 2);
+        assertEquals("enthusia:journal_quill", itemModel.itemModel());
+        assertThrows(IllegalArgumentException.class, () -> new ProjectionService.Node(
+            "bad-item-model", null, "x", List.of(), Material.PAPER,
+            "Bad Namespace", "TASK", 1, 2));
+
         String source = Files.readString(Path.of("src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"));
         assertFalse(source.contains("dispatchCommand("));
         assertFalse(source.contains("giveReward("));
+        assertTrue(source.contains("setCustomModelData(definition.customModelData())"));
+        assertTrue(source.contains("setItemModel(itemModel)"));
         assertEquals(2, source.split("false, false", -1).length - 1,
             "Both root and child displays must disable automatic toast and chat");
     }
