@@ -1,0 +1,6 @@
+name: EnthusiaAdvancements
+version: 1.0.0-pilot.4
+main: io.github.badgersmc.advancements.pilot.PilotPlugin
+api-version: '26.2'
+depend: [UltimateAdvancementAPI]
+description: Projection-only EnthusiaTags test-server pilot; no bundled challenge or reward execution.

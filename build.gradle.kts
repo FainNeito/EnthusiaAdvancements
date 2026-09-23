@@ -24,7 +24,7 @@ repositories {
 dependencies {
     // Server-provided (not shaded)
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("com.frengor:ultimateadvancementapi:2.8.0")
+    compileOnly("com.frengor:ultimateadvancementapi:2.8.1")
     compileOnly(files("../luma-guilds/build/libs/LumaGuilds-2.1.0.jar"))
     compileOnly(files("../enthusia-market/build/libs/EnthusiaMarket-0.2.0.jar"))
     compileOnly("com.artillexstudios:AxKothAPI:4")
@@ -50,7 +50,7 @@ dependencies {
 
     // Test — compileOnly deps need to be on test runtime classpath for mocking
     testImplementation("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    testImplementation("com.frengor:ultimateadvancementapi:2.8.0")
+    testImplementation("com.frengor:ultimateadvancementapi:2.8.1")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
     testImplementation("io.mockk:mockk:1.13.13")
