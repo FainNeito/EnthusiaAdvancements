@@ -6,13 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fren_gor.ultimateAdvancementAPI.advancement.display.AdvancementDisplay;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class ProjectionContractTest {
+
+    @BeforeAll
+    static void initializeDisplayAdapter() {
+        UaaDisplayFixture.initialize();
+    }
 
     @Test
     void clientProgressCannotRoundIncompleteUpToCompleted() {
@@ -56,6 +64,43 @@ class ProjectionContractTest {
     void unknownFrameIsRejected() {
         assertThrows(IllegalArgumentException.class, () ->
             node("valid", "UNKNOWN")
+        );
+    }
+
+    @Test
+    void nullFrameIsRejectedAsInvalidInput() {
+        assertThrows(IllegalArgumentException.class, () -> node("valid", null));
+    }
+
+    @Test
+    void nullDescriptionIsRejectedAsInvalidInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+            new ProjectionService.Node(
+                "valid",
+                null,
+                "x",
+                null,
+                Material.CLOCK,
+                "TASK",
+                1,
+                0
+            )
+        );
+    }
+
+    @Test
+    void nullDescriptionEntryIsRejectedAsInvalidInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+            new ProjectionService.Node(
+                "valid",
+                null,
+                "x",
+                java.util.Arrays.asList("ok", null),
+                Material.CLOCK,
+                "TASK",
+                1,
+                0
+            )
         );
     }
 
@@ -160,24 +205,34 @@ class ProjectionContractTest {
     }
 
     @Test
-    void projectionSourceDisablesAutomaticAnnouncements() throws Exception {
-        String source = pilotSource();
-        var announcements = java.util.regex.Pattern.compile(
-            "false\\s*,\\s*false"
-        )
-            .matcher(source)
-            .results()
-            .count();
-        assertEquals(
-            2,
-            announcements,
-            "Root and child displays must disable automatic toast and chat"
-        );
+    void displaysDisableAutomaticAnnouncements() {
+        try (
+            var items = org.mockito.Mockito.mockConstruction(
+                ItemStack.class,
+                (item, context) ->
+                    org.mockito.Mockito.when(item.clone()).thenReturn(item)
+            )
+        ) {
+            AdvancementDisplay root = PilotPlugin.rootDisplay(
+                new ItemStack(Material.CLOCK)
+            );
+            assertFalse(root.doesShowToast());
+            assertFalse(root.doesAnnounceToChat());
+            for (String frame : List.of("TASK", "GOAL", "CHALLENGE")) {
+                AdvancementDisplay child = PilotPlugin.nodeDisplay(
+                    node("child", frame)
+                );
+                assertFalse(child.doesShowToast());
+                assertFalse(child.doesAnnounceToChat());
+            }
+        }
     }
 
     private static String pilotSource() throws Exception {
-        return Files.readString(Path.of(
-            "src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"
-        ));
+        return Files.readString(
+            Path.of(
+                "src/main/java/io/github/badgersmc/advancements/pilot/PilotPlugin.java"
+            )
+        );
     }
 }

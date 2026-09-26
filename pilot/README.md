@@ -8,4 +8,6 @@ Build with Java 25 and Maven: `mvn clean install`. Use the same workspace Maven 
 
 Calls run on the server thread. UAA player data must be loaded and the player must have an individual UAA team. Shared teams are not modified or split automatically; this prevents personal progress leaking across accounts. Keep UAA's default individual-player teams for this pilot.
 
+Tree registration snapshots the root icon and ordered definitions and validates display inputs before replacing an existing tab. If replacement creation or registration fails, the pilot recreates the previous registration under its original namespace and owner, then reports the original failure. UAA disposes unregistered tabs, so recovery uses a fresh tab. If recovery also fails, that failure is suppressed on the original exception and no disposed tree remains in the provider index; the provider may retry registration. Recovery is not a reward replay and does not add custom progression persistence.
+
 Server/client rendering remains a staging check. 26.3 is not verified. No vanilla advancements are disabled or replaced.
