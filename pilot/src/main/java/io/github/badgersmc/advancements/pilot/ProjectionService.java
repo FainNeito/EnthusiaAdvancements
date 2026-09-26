@@ -106,6 +106,14 @@ public interface ProjectionService {
             if (
                 title == null || title.isBlank()
             ) throw new IllegalArgumentException("Missing title");
+            if (description == null) throw new IllegalArgumentException(
+                "Missing description"
+            );
+            for (String line : description) {
+                if (line == null) throw new IllegalArgumentException(
+                    "Null description entry"
+                );
+            }
             description = List.copyOf(description);
             if (icon == null) icon = Material.CLOCK;
             if (
@@ -118,6 +126,7 @@ public interface ProjectionService {
                 "Invalid item model: " + itemModel
             );
             if (
+                frame == null ||
                 !List.of("TASK", "GOAL", "CHALLENGE").contains(frame)
             ) throw new IllegalArgumentException("Invalid frame");
         }

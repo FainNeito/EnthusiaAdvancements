@@ -62,7 +62,8 @@ class ProjectionBoundaryTest {
             owner,
             tab,
             root,
-            Map.of("node", node)
+            Map.of("node", node),
+            null
         );
         var trees = PilotPlugin.class.getDeclaredField("trees");
         trees.setAccessible(true);

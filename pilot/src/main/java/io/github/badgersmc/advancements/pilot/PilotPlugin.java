@@ -31,8 +31,11 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Plugin owner,
         AdvancementTab tab,
         RootAdvancement root,
-        Map<String, BaseAdvancement> nodes
+        Map<String, BaseAdvancement> nodes,
+        Registration registration
     ) {}
+
+    private record Registration(ItemStack icon, List<Node> definitions) {}
 
     @Override
     public void onEnable() {
@@ -74,14 +77,96 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Objects.requireNonNull(owner, "Missing owner");
         Tree existing = trees.get(namespace);
         assertTreeOwner(existing, owner);
-        ProjectionChecks.validateDefinitions(definitions);
+        Registration registration = validatedRegistration(
+            namespace,
+            icon,
+            definitions
+        );
         replaceExistingTree(owner, namespace, existing);
+        try {
+            trees.put(
+                namespace,
+                createRegisteredTree(owner, namespace, registration)
+            );
+        } catch (RuntimeException ex) {
+            restorePreviousTree(namespace, existing, ex);
+            throw ex;
+        }
+    }
+
+    private static Registration validatedRegistration(
+        String namespace,
+        ItemStack icon,
+        List<Node> definitions
+    ) {
+        if (namespace == null || !namespace.matches("[a-z0-9._-]+")) {
+            throw new IllegalArgumentException(
+                "Invalid namespace: " + namespace
+            );
+        }
+        if (icon == null) throw new IllegalArgumentException(
+            "Missing root icon"
+        );
+        if (definitions == null) throw new IllegalArgumentException(
+            "Missing node definitions"
+        );
+        for (Node definition : definitions) {
+            if (definition == null) throw new IllegalArgumentException(
+                "Null node definition"
+            );
+        }
+        Registration registration = new Registration(
+            icon.clone(),
+            List.copyOf(definitions)
+        );
+        ProjectionChecks.validateDefinitions(registration.definitions());
+        // Build displays before removing the old tab: UAA validates coordinates and icons here.
+        rootDisplay(registration.icon());
+        for (Node definition : registration.definitions())
+            nodeDisplay(definition);
+        return registration;
+    }
+
+    private Tree createRegisteredTree(
+        Plugin owner,
+        String namespace,
+        Registration registration
+    ) {
         AdvancementTab tab = api.createAdvancementTab(namespace);
         try {
-            trees.put(namespace, registerDefinitions(owner, icon, definitions, tab));
-        } catch (RuntimeException ex) {
-            api.unregisterAdvancementTab(namespace);
-            throw ex;
+            return registerDefinitions(owner, registration, tab);
+        } catch (RuntimeException failure) {
+            try {
+                api.unregisterAdvancementTab(namespace);
+            } catch (RuntimeException cleanupFailure) {
+                if (cleanupFailure != failure) failure.addSuppressed(
+                    cleanupFailure
+                );
+            }
+            throw failure;
+        }
+    }
+
+    private void restorePreviousTree(
+        String namespace,
+        Tree existing,
+        RuntimeException failure
+    ) {
+        if (existing == null) return;
+        try {
+            // Unregistered UAA tabs are disposed; reconstruct, never reuse the old tab.
+            trees.put(
+                namespace,
+                createRegisteredTree(
+                    existing.owner(),
+                    namespace,
+                    existing.registration()
+                )
+            );
+        } catch (RuntimeException recoveryFailure) {
+            if (recoveryFailure != failure) failure.addSuppressed(
+                recoveryFailure
+            );
         }
     }
 
@@ -101,17 +186,16 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
 
     private static Tree registerDefinitions(
         Plugin owner,
-        ItemStack icon,
-        List<Node> definitions,
+        Registration registration,
         AdvancementTab tab
     ) {
-        RootAdvancement root = rootAdvancement(tab, icon);
+        RootAdvancement root = rootAdvancement(tab, registration.icon());
         Map<String, BaseAdvancement> nodes = new LinkedHashMap<>();
-        for (Node definition : definitions) {
+        for (Node definition : registration.definitions()) {
             nodes.put(definition.key(), createNode(definition, root, nodes));
         }
         tab.registerAdvancements(root, new HashSet<>(nodes.values()));
-        return new Tree(owner, tab, root, nodes);
+        return new Tree(owner, tab, root, nodes, registration);
     }
 
     private static RootAdvancement rootAdvancement(
@@ -127,7 +211,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         );
     }
 
-    private static AdvancementDisplay rootDisplay(ItemStack icon) {
+    static AdvancementDisplay rootDisplay(ItemStack icon) {
         return new AdvancementDisplay(
             icon,
             "Enthusia",
@@ -161,7 +245,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         );
     }
 
-    private static AdvancementDisplay nodeDisplay(Node definition) {
+    static AdvancementDisplay nodeDisplay(Node definition) {
         AdvancementFrameType frame = switch (definition.frame()) {
             case "TASK" -> AdvancementFrameType.TASK;
             case "GOAL" -> AdvancementFrameType.GOAL;
@@ -189,6 +273,9 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             return icon;
         }
         ItemMeta meta = icon.getItemMeta();
+        if (meta == null) throw new IllegalArgumentException(
+            "Icon does not support metadata: " + definition.icon()
+        );
         applyCustomModelData(definition, meta);
         applyItemModel(definition, meta);
         icon.setItemMeta(meta);
@@ -245,7 +332,9 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Tree tree = ownedTree(owner, namespace);
         if (tree == null) return;
         // Snapshot and validate every entry before granting the root, showing a tab, or changing nodes.
-        Map<String, Integer> checked = ProjectionChecks.checkedProgress(progress);
+        Map<String, Integer> checked = ProjectionChecks.checkedProgress(
+            progress
+        );
         if (!ready(player)) return;
         showTree(tree, player);
         for (var entry : checked.entrySet()) {
