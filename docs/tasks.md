@@ -676,3 +676,13 @@ P1-T1 (Gradle)
 | 7: Plugin Hooks | 1 | 0 | 0 |
 | 8: Integration | 2 | 2 | 0 |
 | **Total** | **23** | **8** | **6** |
+
+---
+
+## Holiday events (EnthusiaHolidays) — 2026-10-06
+
+### HOL-T1: Holidays tree and integration-tree install (REQ-HOL-01, REQ-HOL-02)
+- **Status:** complete locally.
+- **Files:** `src/main/resources/trees/holidays.conf`, `config/BundledTrees.kt`, `EnthusiaAdvancementsPlugin.kt`, `test/.../config/HolidaysTreeTest.kt`.
+- **Evidence:** `HolidaysTreeTest` (5): the bundled tree parses and validates with the exact key set; no node has a requirement; a fresh install copies the starter trees and `holidays.conf`; an existing server gets only `holidays.conf` and keeps its own trees untouched; an edited `holidays.conf` is never overwritten. RED: the installer tests failed to compile before `BundledTrees` existed.
+- **Test-suite repair:** `TreeConfigParserTest` asserted `TreeDef.backgroundTexture`, which was removed with the UltimateAdvancementAPI 2.8.0 adaptation (#1), so the Gradle test sources no longer compiled (CI only builds `pilot/`). The stale assertion was dropped; the parser ignores `background-texture`. Full `gradle test` with the sibling plugin jars: 52 tests, 0 failures.

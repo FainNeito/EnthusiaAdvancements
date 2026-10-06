@@ -209,6 +209,14 @@ The plugin shall auto-generate an `advancements.conf` file via Nexus `@ConfigFil
 ### REQ-CONFIG-02: Default Trees
 When the `trees/` directory does not exist on first startup, the plugin shall copy bundled default tree configs (e.g. `combat.conf`, `exploration.conf`) into the directory.
 
+## REQ-HOL: Holiday events (EnthusiaHolidays)
+
+### REQ-HOL-01: Command-granted holidays tree
+The plugin shall bundle a `holidays` tree (`trees/holidays.conf`) whose nodes have no `requirement`, so they are completed only by `advancements grant <player> holidays <key>` from EnthusiaHolidays. Keys: `pumpkin_hunter`, `no_pumpkin_left_behind`, `present_seeker`, `home_for_the_holidays`, `advent_keeper`, `secret_santa`. EnthusiaHolidays pays the rewards, so the nodes carry none.
+
+### REQ-HOL-02: Integration trees on existing servers
+When an integration tree's file (currently `holidays.conf`) is missing from `trees/`, the plugin shall copy it on startup even if `trees/` already exists, and shall never overwrite an existing tree file. Starter trees keep REQ-CONFIG-02's fresh-install-only behavior.
+
 ---
 
 ## REQ-TEST: Testing
