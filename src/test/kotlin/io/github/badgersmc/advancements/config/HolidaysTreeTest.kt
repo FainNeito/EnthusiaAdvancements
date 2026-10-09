@@ -35,7 +35,8 @@ class HolidaysTreeTest {
         assertEquals(
             setOf(
                 "holidays_root", "pumpkin_hunter", "no_pumpkin_left_behind", "present_seeker",
-                "home_for_the_holidays", "advent_keeper", "secret_santa",
+                "home_for_the_holidays", "advent_keeper", "secret_santa", "seen_the_watcher",
+                "trick_or_treat", "hexed", "rare_treat", "pumpkin_king", "spooky_together",
             ),
             tree.nodes.map { it.key }.toSet(),
         )

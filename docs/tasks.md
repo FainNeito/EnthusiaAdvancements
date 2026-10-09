@@ -686,3 +686,10 @@ P1-T1 (Gradle)
 - **Files:** `src/main/resources/trees/holidays.conf`, `config/BundledTrees.kt`, `EnthusiaAdvancementsPlugin.kt`, `test/.../config/HolidaysTreeTest.kt`.
 - **Evidence:** `HolidaysTreeTest` (5): the bundled tree parses and validates with the exact key set; no node has a requirement; a fresh install copies the starter trees and `holidays.conf`; an existing server gets only `holidays.conf` and keeps its own trees untouched; an edited `holidays.conf` is never overwritten. RED: the installer tests failed to compile before `BundledTrees` existed.
 - **Test-suite repair:** `TreeConfigParserTest` asserted `TreeDef.backgroundTexture`, which was removed with the UltimateAdvancementAPI 2.8.0 adaptation (#1), so the Gradle test sources no longer compiled (CI only builds `pilot/`). The stale assertion was dropped; the parser ignores `background-texture`. Full `gradle test` with the sibling plugin jars: 52 tests, 0 failures.
+
+### HOL-T2: Halloween advancements (REQ-HOL-01)
+- **Status:** complete locally.
+- **Change:** the Halloween line is now Trick or Treat (first pumpkin) → Pumpkin Hunter (15) → No Pumpkin Left Behind (all) → Pumpkin King (first to find all). Hexed (cursed by the Witch), A Rare Treat (the rarest treat) and Spooky Together (helped the guild unlock its Halloween menu style) branch off Trick or Treat. `seen_the_watcher` was added to match EnthusiaHolidays' config. All are granted by command (owner, 2026-10-09).
+- **Hidden:** the parser has no `hidden` key (the `hidden = true` lines in other trees are ignored), so the surprise nodes stay visible. Their descriptions don't give the surprise away.
+- **Existing servers:** `holidays.conf` is installed only when it is missing, so a server that already has it must replace it to get the new nodes.
+- **Evidence:** `HolidaysTreeTest` failed on the new key set, then passed. Full `gradle test` with the sibling plugin jars passes.
