@@ -693,3 +693,8 @@ P1-T1 (Gradle)
 - **Hidden:** the parser has no `hidden` key (the `hidden = true` lines in other trees are ignored), so the surprise nodes stay visible. Their descriptions don't give the surprise away.
 - **Existing servers:** `holidays.conf` is installed only when it is missing, so a server that already has it must replace it to get the new nodes.
 - **Evidence:** `HolidaysTreeTest` failed on the new key set, then passed. Full `gradle test` with the sibling plugin jars passes.
+
+### HOL-T3: Watcher advancements (REQ-HOL-01)
+- **Status:** complete locally.
+- **Change:** Don't Blink (a stalking sighting seen to the end) and Forgotten Melody (the Watcher's theme played for you) branch off Seen the Watcher, whose description is now "It has seen you too." Descriptions stay vague on purpose (owner, 2026-10-09). Granted by command from EnthusiaHolidays.
+- **Evidence:** `HolidaysTreeTest` with the new key set; full `gradle test` with the sibling plugin jars passes.

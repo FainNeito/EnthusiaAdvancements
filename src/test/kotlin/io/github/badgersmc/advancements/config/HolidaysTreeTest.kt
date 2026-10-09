@@ -36,7 +36,7 @@ class HolidaysTreeTest {
             setOf(
                 "holidays_root", "pumpkin_hunter", "no_pumpkin_left_behind", "present_seeker",
                 "home_for_the_holidays", "advent_keeper", "secret_santa", "seen_the_watcher",
-                "trick_or_treat", "hexed", "rare_treat", "pumpkin_king", "spooky_together",
+                "trick_or_treat", "hexed", "rare_treat", "pumpkin_king", "spooky_together", "dont_blink", "forgotten_melody",
             ),
             tree.nodes.map { it.key }.toSet(),
         )
