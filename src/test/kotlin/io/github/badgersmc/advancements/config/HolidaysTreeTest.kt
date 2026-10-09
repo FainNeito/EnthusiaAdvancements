@@ -43,6 +43,14 @@ class HolidaysTreeTest {
     }
 
     @Test
+    fun `holiday positions are zero or positive and never overlap`() {
+        // UltimateAdvancementAPI refuses a negative x or y, which fails the whole tree.
+        val nodes = parseBundledHolidays().nodes
+        nodes.forEach { assertTrue(it.x >= 0 && it.y >= 0, "${it.key} at ${it.x},${it.y}") }
+        assertEquals(nodes.size, nodes.map { it.x to it.y }.toSet().size)
+    }
+
+    @Test
     fun `holiday advancements are granted only by command`() {
         // EnthusiaHolidays grants these with `advancements grant <player> holidays <key>`;
         // a requirement would let normal gameplay complete them too.

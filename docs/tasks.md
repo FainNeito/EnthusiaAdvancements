@@ -698,3 +698,4 @@ P1-T1 (Gradle)
 - **Status:** complete locally.
 - **Change:** Don't Blink (a stalking sighting seen to the end) and Forgotten Melody (the Watcher's theme played for you) branch off Seen the Watcher, whose description is now "It has seen you too." Descriptions stay vague on purpose (owner, 2026-10-09). Granted by command from EnthusiaHolidays.
 - **Evidence:** `HolidaysTreeTest` with the new key set; full `gradle test` with the sibling plugin jars passes.
+- **Fix (HOL-T2/T3):** UltimateAdvancementAPI refuses negative positions ("y is not zero or positive"), and SMP Test's pilot failed to register the tree with them. The Halloween row has been at y = -1 since HOL-T1. The tree is now laid out at x, y ≥ 0 with no two nodes on one spot, and `HolidaysTreeTest` checks both.
