@@ -69,6 +69,14 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         );
     }
 
+    /** Additive public catalogue for the website bridge. Invoke on the server thread. */
+    public Map<String, Object> websiteAchievements() {
+        mainThread();
+        Map<String, List<Node>> definitions = new LinkedHashMap<>();
+        trees.forEach((namespace, tree) -> definitions.put(namespace, tree.registration().definitions()));
+        return PublicAchievementCatalog.build(definitions, java.time.Instant.now());
+    }
+
     @Override
     public void registerTree(
         Plugin owner,
