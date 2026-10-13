@@ -53,6 +53,26 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         getLogger().info(
             "Projection-only pilot enabled. No default challenge trees or rewards are loaded."
         );
+        Objects.requireNonNull(getCommand("enthusia-export-catalogue")).setExecutor((sender, command, label, args) -> {
+            if (!(sender instanceof org.bukkit.command.ConsoleCommandSender)
+                || !getConfig().getBoolean("website.local-catalogue-export", false)) {
+                sender.sendMessage("Local catalogue export is disabled or requires the local server console.");
+                return true;
+            }
+            Map<String, Object> snapshot = websiteAchievements();
+            if (((List<?>) snapshot.get("items")).isEmpty()) {
+                sender.sendMessage("No registered provider definitions; no catalogue was exported."); return true;
+            }
+            try {
+                java.nio.file.Path directory = getDataFolder().toPath().resolve("website-export");
+                java.nio.file.Path output = PublicCatalogueFiles.write(directory, snapshot);
+                sender.sendMessage("Exported registered catalogue to " + output);
+            } catch (java.io.IOException error) {
+                getLogger().warning("Local catalogue export failed: " + error.getClass().getSimpleName());
+                sender.sendMessage("Local catalogue could not be saved.");
+            }
+            return true;
+        });
     }
 
     @Override
@@ -75,6 +95,23 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Map<String, List<Node>> definitions = new LinkedHashMap<>();
         trees.forEach((namespace, tree) -> definitions.put(namespace, tree.registration().definitions()));
         return PublicAchievementCatalog.build(definitions, java.time.Instant.now());
+    }
+
+    /** Opt-in requested loaded individuals only. Never loads users or grants/redeems anything. */
+    public Map<String, Object> websitePlayerAchievements(List<java.util.UUID> requested) {
+        mainThread();
+        if (!getConfig().getBoolean("website.public-player-completions", false))
+            throw new IllegalStateException("Public player completion export is disabled");
+        return PublicPlayerAchievements.build(requested, id -> {
+            Player player = Bukkit.getPlayer(id);
+            if (player == null || trees.isEmpty() || !ready(player)) return null;
+            List<String> completed = new java.util.ArrayList<>();
+            for (Tree tree : trees.values()) for (Node definition : tree.registration().definitions()) {
+                BaseAdvancement node = tree.nodes().get(definition.key());
+                if (node != null && node.isGranted(player)) completed.add(definition.title());
+            }
+            return new PublicPlayerAchievements.Completion(player.getName(), completed);
+        }, java.time.Instant.now());
     }
 
     @Override

@@ -1,6 +1,13 @@
 name: EnthusiaAdvancements
 version: 1.0.0-pilot.6-watcher-brackets-test.6
 main: io.github.badgersmc.advancements.pilot.PilotPlugin
+commands:
+  enthusia-export-catalogue:
+    description: Export registered provider definitions on an isolated local restore
+    permission: enthusiaadvancements.local-export
+permissions:
+  enthusiaadvancements.local-export:
+    default: op
 api-version: '26.2'
 depend: [UltimateAdvancementAPI]
 softdepend: [DiscordSRV, InteractiveChat, InteractiveChatDiscordSrvAddon]

@@ -22,9 +22,10 @@ final class PublicAchievementCatalog {
             // Rewards and completion totals belong to providers, not the renderer.
             row.put("reward", "");
             row.put("completed", null);
+            row.put("maximumProgress", 100);
             items.add(row);
         }));
         return Map.of("schemaVersion", 1, "generatedAt", capturedAt.toString(),
-            "limited", true, "source", "server_export", "items", items);
+            "limited", true, "source", "server_export", "scope", "registered_renderer_projection", "items", items);
     }
 }
