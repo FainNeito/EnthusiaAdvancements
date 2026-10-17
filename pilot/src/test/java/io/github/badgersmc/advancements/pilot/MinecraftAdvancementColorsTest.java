@@ -49,4 +49,39 @@ class MinecraftAdvancementColorsTest {
         assertEquals(ChatColor.AQUA, result.getExtra().getFirst().getColor());
         assertNull(MinecraftAdvancementColors.format(null, AdvancementFrameType.TASK));
     }
+
+    @Test void watcherBracketsFollowConfiguredTitleWithoutChangingOtherAdvancements() {
+        String title = "§x§a§7§a§d§b§4Seen the Watcher";
+        for (String key : new String[]{"seen_the_watcher", "dont_blink", "forgotten_melody"}) {
+            for (var frame : new AdvancementFrameType[]{AdvancementFrameType.GOAL, AdvancementFrameType.CHALLENGE}) {
+                assertWatcherBrackets(key, frame, title);
+            }
+        }
+    }
+
+    @Test void otherAdvancementsAndMissingTitlesKeepFrameMapping() {
+        String title = "Watcher";
+        TextComponent ordinary = new TextComponent("[Pumpkin King]");
+        ordinary.setColor(AdvancementFrameType.CHALLENGE.getColor());
+        assertEquals(ChatColor.DARK_RED, MinecraftAdvancementColors.format(new BaseComponent[]{ordinary}, AdvancementFrameType.CHALLENGE, new MinecraftAdvancementColors.Announcement("holidays", "pumpkin_king", title))[0].getColor());
+        assertEquals(ChatColor.DARK_RED, MinecraftAdvancementColors.format(new BaseComponent[]{ordinary}, AdvancementFrameType.CHALLENGE, new MinecraftAdvancementColors.Announcement("other", "seen_the_watcher", title))[0].getColor());
+        assertEquals(ChatColor.DARK_RED, MinecraftAdvancementColors.format(new BaseComponent[]{ordinary}, AdvancementFrameType.CHALLENGE, new MinecraftAdvancementColors.Announcement("holidays", "seen_the_watcher", null))[0].getColor());
+    }
+
+    private void assertWatcherBrackets(String key, AdvancementFrameType frame, String title) {
+        TextComponent bracket = new TextComponent("[");
+        bracket.setColor(frame.getColor());
+        bracket.addExtra(TextComponent.fromLegacyText(title)[0]);
+        TextComponent closing = new TextComponent("]");
+        closing.setColor(frame.getColor());
+        closing.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/rewards"));
+        bracket.addExtra(closing);
+        var result = MinecraftAdvancementColors.format(new BaseComponent[]{bracket}, frame, new MinecraftAdvancementColors.Announcement("holidays", key, title))[0];
+        assertEquals(ChatColor.of("#A7ADB4").getColor(), result.getColor().getColor());
+        assertEquals(ChatColor.of("#A7ADB4").getColor(), result.getExtra().getLast().getColor().getColor());
+        assertEquals(ChatColor.of("#A7ADB4").getColor(), result.getExtra().getFirst().getColor().getColor());
+        assertEquals("[Seen the Watcher]", result.toPlainText());
+        assertEquals(closing.getClickEvent(), result.getExtra().getLast().getClickEvent());
+        assertEquals(frame.getColor(), bracket.getColor());
+    }
 }

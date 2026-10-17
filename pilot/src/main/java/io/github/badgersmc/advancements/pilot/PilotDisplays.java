@@ -37,15 +37,10 @@ final class PilotDisplays {
             case "CHALLENGE" -> AdvancementFrameType.CHALLENGE;
             default -> throw new IllegalArgumentException("Invalid frame");
         };
-        return new AdvancementDisplay(
+        return new ParsedAdvancementDisplay(
             createIcon(definition),
-            definition.title(),
-            frame,
-            false,
-            false,
-            definition.x(),
-            definition.y(),
-            definition.description()
+            definition,
+            frame
         );
     }
 
