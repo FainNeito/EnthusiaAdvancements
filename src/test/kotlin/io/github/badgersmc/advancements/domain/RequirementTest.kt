@@ -19,7 +19,7 @@ class RequirementTest {
             "GUILD_COLLECTIVE_CROP_HARVEST", "GUILD_COLLECTIVE_MOB_KILL",
             "GUILD_COLLECTIVE_BOSS_KILL",
             "GUILD_SHOP_SALE", "GUILD_SHOP_PURCHASE",
-            "KOTH_CAPTURE", "KOTH_CONSECUTIVE_CAPTURE",
+            "KOTH_CAPTURE", "KOTH_CONSECUTIVE_CAPTURE", "EKOTH_VERIFIED_CHALLENGE",
             "GUILD_WAR_KILL", "GUILD_COMBINED_PLAYTIME",
             "GUILD_LEADERBOARD_RANK",
             "GUILD_ALLIANCE_FORMED",
@@ -40,7 +40,7 @@ class RequirementTest {
 
     @Test
     fun `requirement type count is 22`() {
-        assertEquals(58, RequirementType.entries.size)
+        assertEquals(59, RequirementType.entries.size)
     }
 
     @Test

@@ -79,12 +79,30 @@ class UltimateAdvancementAdapter(
 
     fun grantRootAdvancement(namespace: String, player: org.bukkit.entity.Player) {
         val rootKey = rootKeys[namespace] ?: return
+        if (isProviderOwned(namespace,rootKey)) return
         val root = advancementMap[namespace]?.get(rootKey) ?: return
         root.grant(player)
     }
 
     override fun getAdvancement(treeNamespace: String, key: String): Advancement? {
         return advancementMap[treeNamespace]?.get(key)
+    }
+    fun isProviderOwned(namespace:String,key:String):Boolean = namespace == "ekoth" ||
+        requirementIndex.any { (type, targets) ->
+            (type == RequirementType.EKOTH_VERIFIED_CHALLENGE || type.isRetiredKoth) &&
+                targets.values.any { (namespace to key) in it }
+        }
+
+    fun projectKoth(player:org.bukkit.entity.Player,progress:Map<String,Int>) {
+        require(progress.values.all { it in 0..100 }) { "Invalid verified KOTH progress" }
+        progress.forEach { (challenge,percent) ->
+            findByRequirement(RequirementType.EKOTH_VERIFIED_CHALLENGE,challenge).forEach { (namespace,key) ->
+                getAdvancement(namespace,key)?.let { advancement ->
+                    val count=(percent.coerceIn(0,100).toLong()*advancement.maxProgression/100).toInt()
+                    advancement.setProgression(player,count,false)
+                }
+            }
+        }
     }
 
     override fun getTreeNamespaces(): Set<String> {

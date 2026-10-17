@@ -22,6 +22,8 @@ data class BuildTreeResult(
 )
 
 object BuildTree {
+    internal fun rewardsFor(namespace:String,node:AdvancementNodeDef):List<io.github.badgersmc.advancements.domain.Reward> =
+        if(namespace == "ekoth" || node.requirement?.type == io.github.badgersmc.advancements.domain.RequirementType.EKOTH_VERIFIED_CHALLENGE || node.requirement?.type?.isRetiredKoth == true) emptyList() else node.rewards
 
     fun execute(treeDef: TreeDef, api: UltimateAdvancementAPI, rewardExecutor: RewardExecutor): BuildTreeResult {
         val tab = api.createAdvancementTab(treeDef.namespace)
@@ -32,18 +34,19 @@ object BuildTree {
 
         for (node in sorted) {
             val display = buildDisplay(node, yOffset)
+            val rewards = rewardsFor(treeDef.namespace,node)
 
             if (node.parentKey == null) {
                 val root = RewardableRootAdvancement(
                     tab, node.key, node.maxProgression, display,
-                    node.rewards, rewardExecutor
+                    rewards, rewardExecutor
                 )
                 advancementMap[node.key] = root
             } else {
                 val parent = advancementMap[node.parentKey]!!
                 val child = RewardableAdvancement(
                     parent, node.key, node.maxProgression, display,
-                    node.rewards, rewardExecutor
+                    rewards, rewardExecutor
                 )
                 advancementMap[node.key] = child
                 children.add(child)

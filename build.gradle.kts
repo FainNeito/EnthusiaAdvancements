@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "2.0.21"
-    id("com.gradleup.shadow") version "8.3.5"
+    kotlin("jvm") version "2.3.20"
+    id("com.gradleup.shadow") version "8.3.11"
 }
 
 group = "io.github.badgersmc"
@@ -8,7 +8,7 @@ version = "1.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -17,24 +17,46 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://nexus.frengor.com/repository/public/")
-    maven("https://repo.artillex-studios.com/releases/")
     maven("https://jitpack.io")
 }
 
 dependencies {
     // Server-provided (not shaded)
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.129-stable")
     compileOnly("com.frengor:ultimateadvancementapi:2.8.1")
-    compileOnly(files("../luma-guilds/build/libs/LumaGuilds-2.1.0.jar"))
-    compileOnly(files("../enthusia-market/build/libs/EnthusiaMarket-0.2.0.jar"))
-    compileOnly("com.artillexstudios:AxKothAPI:4")
+
+    // LumaGuilds API: prefer an explicit artifact path from the monorepo/CI.
+    // Otherwise resolve any current LumaGuilds jar instead of pinning a stale filename.
+    val lumaGuildsJar = System.getenv("LUMAGUILDS_JAR")
+        ?: project.findProperty("lumaguilds.jar")?.toString()
+    if (lumaGuildsJar != null) {
+        compileOnly(files(lumaGuildsJar))
+    } else {
+        compileOnly(fileTree("../luma-guilds/build/libs") { include("LumaGuilds-*.jar") })
+    }
+
+    // EnthusiaMarket API: prefer an explicit artifact path from the monorepo/CI.
+    // Otherwise resolve any current Market jar instead of pinning a stale filename.
+    val enthusiaMarketJar = System.getenv("ENTHUSIAMARKET_JAR")
+        ?: project.findProperty("enthusiamarket.jar")?.toString()
+    if (enthusiaMarketJar != null) {
+        compileOnly(files(enthusiaMarketJar))
+    } else {
+        compileOnly(fileTree("../enthusia-market/build/libs") { include("EnthusiaMarket-*.jar") })
+    }
     compileOnly(files("../diary-keeper/target/DiaryKeeper-1.4.8.jar"))
     // NOTE: Project.files() does NOT expand glob patterns — files("../x/*.jar")
     // is treated as a literal (missing) path and silently yields an empty
     // classpath. fileTree() globs properly. Exact names drift with version
     // bumps (commend 2.x, currency 1.4.x), so glob via fileTree.
     compileOnly(fileTree("../enthusia-currency/target") { include("enthusia-currency-*.jar") })
-    compileOnly(files("../playtime-plugin/target/playtime-plugin-3.5.16.jar"))
+    val enthusiaPlaytimeJar = System.getenv("ENTHUSIAPLAYTIME_JAR")
+        ?: project.findProperty("enthusiaplaytime.jar")?.toString()
+    if (enthusiaPlaytimeJar != null) {
+        compileOnly(files(enthusiaPlaytimeJar))
+    } else {
+        compileOnly(fileTree("../playtime-plugin/target") { include("playtime-plugin-*.jar") })
+    }
     // The commend artifact is "EnthusiaCommend" (capital E, no hyphen) — its
     // target jar is EnthusiaCommend-2.13.1.jar, not enthiusa-commend-*.jar.
     compileOnly(fileTree("../enthusia-commend/target") { include("EnthusiaCommend-*.jar") })
@@ -49,12 +71,14 @@ dependencies {
     implementation("com.typesafe:config:1.4.3")
 
     // Test — compileOnly deps need to be on test runtime classpath for mocking
-    testImplementation("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.129-stable")
     testImplementation("com.frengor:ultimateadvancementapi:2.8.1")
     testImplementation(kotlin("test"))
+    testImplementation(enforcedPlatform("org.junit:junit-bom:5.14.4"))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
     testImplementation("io.mockk:mockk:1.13.13")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.0.0")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
 }
 
 tasks.test {
@@ -62,6 +86,7 @@ tasks.test {
 }
 
 tasks.shadowJar {
+    exclude("net/badgersmc/ek/api/**")
     archiveClassifier.set("")
     relocate("net.badgersmc.nexus", "io.github.badgersmc.advancements.lib.nexus")
 }

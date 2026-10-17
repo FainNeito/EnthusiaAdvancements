@@ -20,6 +20,12 @@
 
 ## REQ-ARCH: Architecture
 
+### REQ-KOTH-RETIRE: Remove AxKoth
+WHEN EnthusiaAdvancements builds or starts THE SYSTEM SHALL operate without the AxKoth repository, API dependency or capture listener, preserve verified eKOTH progression, and reject progression/rewards from retired capture requirement types while keeping existing tree files parseable.
+
+### REQ-BUILD-PT: Pinned playtime API
+When the network supplies an explicit Playtime artifact, the build shall compile against that artifact without requiring a legacy version in its filename.
+
 ### REQ-ARCH-01: Hexagonal Architecture
 The plugin shall follow hexagonal (ports and adapters) architecture with three layers:
 - **Domain** — Pure Kotlin models with zero framework imports
@@ -244,3 +250,9 @@ The plugin shall have integration tests (with mocked UAAPI) verifying:
 | AC-07 | Invalid tree configs produce clear error messages | Unit test |
 | AC-08 | All domain/action tests pass | CI / `./gradlew test` |
 | AC-09 | Plugin starts cleanly without LumaGuilds installed | Manual server test |
+
+### REQ-PILOT-HOVER-001
+WHEN a provider title or description contains legacy RGB or formatting codes THE SYSTEM SHALL render them as parsed chat components in advancement announcement titles and hover tooltips, retaining default frame color for uncolored text, preserving title/description boundaries, and never emitting raw section-code text to the client. Ownership, progress, DTO descriptors and toast displays SHALL remain unchanged.
+
+### REQ-PILOT-WATCHER-BRACKETS-002
+WHEN announcing holidays:seen_the_watcher, holidays:dont_blink or holidays:forgotten_melody THE SYSTEM SHALL retain the bracket characters and colour the frame-coloured announcement components using the Watcher title colour, preserving explicit title/description colours, hover and click events and shared display data. Other advancements SHALL retain the existing frame-colour mapping. Missing title data SHALL retain the existing mapping.

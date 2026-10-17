@@ -74,7 +74,7 @@ class TreeConfigParserTest {
         assertEquals(1, trees.size)
         val tree = trees[0]
         assertEquals("test", tree.namespace)
-        assertEquals("minecraft:textures/block/stone.png", tree.backgroundTexture)
+        // Current TreeDef no longer exposes backgroundTexture; validate node parsing.
         assertEquals(2, tree.nodes.size)
 
         val root = tree.nodes.find { it.key == "root" }!!

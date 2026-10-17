@@ -1,11 +1,23 @@
 # Tasks — CustomAdvancements Plugin
 
+- [x] EA-KOTH-RETIRE (REQ-KOTH-RETIRE): Removed AxKoth build repository/API and capture listener; stored requirement tokens/layouts remain parseable, with retired progress, administrative grants and reward payloads blocked. Verified eKOTH projection remains unchanged. SPEAR helpers are absent; this manual record is authoritative. Prove: 19 targeted cases yielded exactly the two new progression/reward failures before implementation. Refine: clean renderer test/shadowJar and dependency report passed with 53 cases, zero failures and no Ax dependencies; existing saved tree parsing is covered. Exact-head hosted CI, canonical network pin and deferred server acceptance remain separate gates. No server changes or player-data migration.
+
 > Version: 1.0 | Last Updated: 2026-04-02
 > Related: `tech-stack.md`, `requirements.md`, `implementation.md`
 
 ---
 
 ## How to Use This Document
+
+### BUILD-PT: Network Playtime classpath (2026-10-04)
+
+Spec: REQ-BUILD-PT; canonical main afe40d9 hardcodes playtime-plugin-3.5.16.jar while the pending canonical Playtime PR produces 3.7.2. PlaytimeListener directly references PlayerPlaytimeTickEvent, so the missing filename cannot satisfy compilation.
+
+Prove: this is build infrastructure; no gameplay behavior changes or synthetic red/green unit test applies. The candidate network checkout produces playtime-plugin-3.7.2.jar and has no 3.5.16 artifact. Local full-network validation is separate from this static classpath evidence.
+
+Engine/arch: accept ENTHUSIAPLAYTIME_JAR or enthusiaplaytime.jar, following the existing Market/Guilds build pattern. Preserve standalone discovery using a fileTree of actual Playtime artifacts. No plugin API, defaults, permissions or persistence changes.
+
+Refine: Gradle dependency configuration passed. A real Gradle compile-classpath probe resolved the exact supplied 3.7.2 artifact and confirmed its PlayerPlaytimeTickEvent API (EXACT_PLAYTIME_CLASSPATH_OK). The candidate network's buildAll passed all 22 tasks, including this root renderer's Kotlin compilation and shadowJar with actual Guilds/Market/Playtime artifacts. Hosted pilot verification and Codacy passed at implementation head e8a9a7f; the documentation refinement does not alter build behavior. No EARS validator/state helpers are present in this checkout; no helper pass is claimed. Production remains untouched. Status: local SPEAR phases complete; canonical merge and final network hosted approval remain external gates.
 
 Each task is a **self-contained work unit**. To start a task:
 
@@ -666,3 +678,7 @@ P1-T1 (Gradle)
 | 7: Plugin Hooks | 1 | 0 | 0 |
 | 8: Integration | 2 | 2 | 0 |
 | **Total** | **23** | **8** | **6** |
+
+- [x] REQ-PILOT-HOVER-001: prove real UAA display emits raw code text; parsed component title/hover adapter, regression and canonical pilot build; reviewable PR and native TEST acceptance pending. No EARS/state helpers available.
+
+- [x] REQ-PILOT-WATCHER-BRACKETS-002: namespace/key scoped bracket palette follows the Watcher title; regression covers all three keys, goal/challenge frames, unchanged bracket characters, source component immutability, click events, unrelated providers/nodes and missing title fallback. Existing hover/DTO/projection tests retained. TEST artifact is unmerged; player acceptance remains separate.
