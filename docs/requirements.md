@@ -20,6 +20,12 @@
 
 ## REQ-ARCH: Architecture
 
+### REQ-KOTH-RETIRE: Remove AxKoth
+WHEN EnthusiaAdvancements builds or starts THE SYSTEM SHALL operate without the AxKoth repository, API dependency or capture listener, preserve verified eKOTH progression, and reject progression/rewards from retired capture requirement types while keeping existing tree files parseable.
+
+### REQ-BUILD-PT: Pinned playtime API
+When the network supplies an explicit Playtime artifact, the build shall compile against that artifact without requiring a legacy version in its filename.
+
 ### REQ-ARCH-01: Hexagonal Architecture
 The plugin shall follow hexagonal (ports and adapters) architecture with three layers:
 - **Domain** — Pure Kotlin models with zero framework imports

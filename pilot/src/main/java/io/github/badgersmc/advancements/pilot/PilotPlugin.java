@@ -23,6 +23,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
 
     private UltimateAdvancementAPI api;
     private final Map<String, Tree> trees = new LinkedHashMap<>();
+    private DiscordAdvancementAnnouncer discord;
 
     private record Tree(
         Plugin owner,
@@ -34,7 +35,12 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         api = UltimateAdvancementAPI.getInstance(this);
+        if (getConfig().getBoolean("discord.enabled", false) &&
+            getServer().getPluginManager().isPluginEnabled("DiscordSRV")) {
+            discord = new DiscordAdvancementAnnouncer(this);
+        }
         getServer()
             .getServicesManager()
             .register(
@@ -53,6 +59,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         getServer().getServicesManager().unregisterAll(this);
         if (api != null) api.unregisterPluginAdvancementTabs();
         trees.clear();
+        discord = null;
     }
 
     private void mainThread() {
@@ -310,9 +317,17 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
                     )
             )
         ) return;
-        var message = node.getAnnounceMessage(player);
+        var message = MinecraftAdvancementColors.format(
+            node.getAnnounceMessage(player), node.getDisplay().getFrame()
+        );
         if (message != null) for (Player viewer : Bukkit.getOnlinePlayers()) {
             if (viewer.canSee(player)) viewer.spigot().sendMessage(message);
+        }
+        if (discord != null && message != null) {
+            tree.registration().definitions().stream()
+                .filter(definition -> definition.key().equals(key))
+                .findFirst()
+                .ifPresent(definition -> discord.announce(player, namespace, definition));
         }
     }
 }

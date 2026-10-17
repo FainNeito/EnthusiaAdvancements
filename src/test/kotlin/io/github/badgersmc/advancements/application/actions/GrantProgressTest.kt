@@ -10,6 +10,7 @@ import org.mockbukkit.mockbukkit.ServerMock
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class GrantProgressTest {
 
@@ -26,6 +27,19 @@ class GrantProgressTest {
     @AfterEach
     fun tearDown() {
         MockBukkit.unmock()
+    }
+
+    @Test
+    fun `verified KOTH cannot increment through ordinary progress triggers`() {
+        GrantProgress.execute(registry,RequirementType.EKOTH_VERIFIED_CHALLENGE,"sovereign_blade",player)
+        verify(exactly=0) { registry.findByRequirement(any(),any()) }
+    }
+
+    @Test
+    fun `retired capture types cannot increment saved trees`() {
+        GrantProgress.execute(registry, RequirementType.KOTH_CAPTURE, null, player)
+        GrantProgress.execute(registry, RequirementType.KOTH_CONSECUTIVE_CAPTURE, null, player)
+        verify(exactly = 0) { registry.findByRequirement(any(), any()) }
     }
 
     @Test
@@ -55,6 +69,60 @@ class GrantProgressTest {
         GrantProgress.execute(registry, RequirementType.ENTITY_KILL, "ZOMBIE", player)
 
         verify { advancement.incrementProgression(player) }
+    }
+
+    @Test
+    fun `newly completed advancement publishes completion exactly once`() {
+        val advancement = mockk<Advancement>(relaxed = true)
+        every { registry.findByRequirement(any(), any()) } returns listOf("exploration" to "ancient_city")
+        every { registry.getAdvancement("exploration", "ancient_city") } returns advancement
+        every { advancement.isGranted(player) } returnsMany listOf(false, true)
+        val completions = mutableListOf<Pair<String, String>>()
+
+        GrantProgress.execute(
+            registry,
+            RequirementType.ENTITY_KILL,
+            "WARDEN",
+            player,
+        ) { _, namespace, key -> completions += namespace to key }
+
+        assertEquals(listOf("exploration" to "ancient_city"), completions)
+    }
+
+    @Test
+    fun `incomplete progress does not publish completion`() {
+        val advancement = mockk<Advancement>(relaxed = true)
+        every { registry.findByRequirement(any(), any()) } returns listOf("combat" to "kill_zombies")
+        every { registry.getAdvancement("combat", "kill_zombies") } returns advancement
+        every { advancement.isGranted(player) } returns false
+        val completions = mutableListOf<Pair<String, String>>()
+
+        GrantProgress.execute(
+            registry,
+            RequirementType.ENTITY_KILL,
+            "ZOMBIE",
+            player,
+        ) { _, namespace, key -> completions += namespace to key }
+
+        assertEquals(emptyList(), completions)
+    }
+
+    @Test
+    fun `already completed advancement does not republish completion`() {
+        val advancement = mockk<Advancement>(relaxed = true)
+        every { registry.findByRequirement(any(), any()) } returns listOf("combat" to "kill_zombies")
+        every { registry.getAdvancement("combat", "kill_zombies") } returns advancement
+        every { advancement.isGranted(player) } returns true
+        val completions = mutableListOf<Pair<String, String>>()
+
+        GrantProgress.execute(
+            registry,
+            RequirementType.ENTITY_KILL,
+            "ZOMBIE",
+            player,
+        ) { _, namespace, key -> completions += namespace to key }
+
+        assertEquals(emptyList(), completions)
     }
 
     @Test

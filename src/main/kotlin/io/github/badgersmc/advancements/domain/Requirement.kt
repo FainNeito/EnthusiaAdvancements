@@ -33,8 +33,9 @@ enum class RequirementType {
     GUILD_SHOP_SALE,
     GUILD_SHOP_PURCHASE,
 
-    // AxKoth
+    // KOTH: legacy tokens retained only for stored configuration compatibility
     KOTH_CAPTURE,
+    EKOTH_VERIFIED_CHALLENGE,
     KOTH_CONSECUTIVE_CAPTURE,
 
     // War kills
@@ -87,7 +88,10 @@ enum class RequirementType {
     REP_MILESTONE,
     COMMEND_PROFILE_VIEWED,
     COMMEND_EDITED,
-    COMMEND_LEADERBOARD_VIEWED
+    COMMEND_LEADERBOARD_VIEWED;
+
+    val isRetiredKoth: Boolean
+        get() = this == KOTH_CAPTURE || this == KOTH_CONSECUTIVE_CAPTURE
 }
 
 data class Requirement(

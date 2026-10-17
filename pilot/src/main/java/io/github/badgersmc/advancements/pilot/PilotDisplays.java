@@ -49,7 +49,7 @@ final class PilotDisplays {
         );
     }
 
-    private static ItemStack createIcon(Node definition) {
+    static ItemStack createIcon(Node definition) {
         ItemStack icon = new ItemStack(definition.icon());
         if (
             definition.customModelData() == null &&

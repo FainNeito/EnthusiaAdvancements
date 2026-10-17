@@ -33,6 +33,10 @@ class AdvancementCommand(
         @Arg("tree") tree: String,
         @Arg("key") key: String
     ) {
+        if(adapter.isProviderOwned(tree,key)) {
+            sender.sendMessage(Component.text("This advancement requires verified KOTH records and cannot be granted administratively.",NamedTextColor.RED))
+            return
+        }
         val player = Bukkit.getPlayer(playerName)
         if (player == null) {
             sender.sendMessage(Component.text("Player '$playerName' not found.", NamedTextColor.RED))

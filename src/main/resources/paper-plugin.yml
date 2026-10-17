@@ -1,12 +1,16 @@
 name: EnthusiaAdvancements
 version: '1.0.0'
 main: io.github.badgersmc.advancements.EnthusiaAdvancementsPlugin
-api-version: '1.21'
+api-version: '26.2'
 description: Config-driven custom advancement trees
 authors:
   - BadgersMC
 dependencies:
   server:
+    EnthusiaKOTH:
+      load: BEFORE
+      required: false
+      join-classpath: true
     UltimateAdvancementAPI:
       load: BEFORE
       required: true

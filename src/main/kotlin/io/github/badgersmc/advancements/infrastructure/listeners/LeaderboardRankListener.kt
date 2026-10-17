@@ -6,7 +6,7 @@ import io.github.badgersmc.advancements.domain.RequirementType
 import io.github.badgersmc.advancements.infrastructure.plugins.LumaGuildsHook
 import net.badgersmc.nexus.annotations.Component
 import net.badgersmc.nexus.annotations.PostConstruct
-import net.lumalyte.lg.domain.events.GuildLeaderboardRankChangeEvent
+import net.lumalyte.lg.api.events.GuildLeaderboardRankChangeEvent
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener

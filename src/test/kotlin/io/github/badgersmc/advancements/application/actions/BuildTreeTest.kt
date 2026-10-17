@@ -14,6 +14,20 @@ import kotlin.test.assertTrue
  * Full integration testing of BuildTree is done in P8-T2 on a live server.
  */
 class BuildTreeTest {
+    @Test fun `retired capture nodes cannot pay configured rewards`() {
+        for (type in listOf(RequirementType.KOTH_CAPTURE, RequirementType.KOTH_CONSECUTIVE_CAPTURE)) {
+            val legacy = node("legacy").copy(requirement = Requirement(type), rewards = listOf(Reward.Experience(500)))
+            assertTrue(BuildTree.rewardsFor("guilds", legacy).isEmpty())
+        }
+    }
+    @Test fun `provider owned trees suppress rewards even after requirement editing`() {
+        val reward=io.github.badgersmc.advancements.domain.Reward.Experience(100)
+        val plain=node("root").copy(rewards=listOf(reward))
+        assertTrue(BuildTree.rewardsFor("ekoth",plain).isEmpty())
+        assertEquals(listOf(reward),BuildTree.rewardsFor("normal",plain))
+        val protected=plain.copy(requirement=io.github.badgersmc.advancements.domain.Requirement(io.github.badgersmc.advancements.domain.RequirementType.EKOTH_VERIFIED_CHALLENGE,"blade"))
+        assertTrue(BuildTree.rewardsFor("other",protected).isEmpty())
+    }
 
     private fun node(key: String, parentKey: String? = null, maxProgression: Int = 1) = AdvancementNodeDef(
         key = key,

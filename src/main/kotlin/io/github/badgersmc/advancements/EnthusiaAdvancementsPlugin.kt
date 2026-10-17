@@ -19,6 +19,9 @@ open class EnthusiaAdvancementsPlugin : JavaPlugin() {
             copyDefaultTree("trees/guilds.conf")
         }
 
+        // Add the provider-owned tree to existing installs without overwriting edits.
+        if (!Files.exists(treesDir.resolve("ekoth.conf"))) copyDefaultTree("trees/ekoth.conf")
+
         // Create Nexus DI context
         nexus = NexusContext.create(
             basePackage = "io.github.badgersmc.advancements",
