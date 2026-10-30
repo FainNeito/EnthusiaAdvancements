@@ -2,6 +2,7 @@ package io.github.badgersmc.advancements.pilot;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -48,6 +49,10 @@ public interface ProjectionService {
         ItemStack icon,
         List<Node> nodes
     );
+    /** Opt-in private nodes; older implementations fail closed. Keys must identify leaf nodes. */
+    default void registerTreeWithPrivateNodes(Plugin owner, String namespace, ItemStack icon, List<Node> nodes, Set<String> privateKeys) {
+        throw new UnsupportedOperationException("Private projection is unavailable");
+    }
     void removeTree(Plugin owner, String namespace);
     boolean ready(Player player);
     void project(
@@ -57,6 +62,11 @@ public interface ProjectionService {
         Map<String, Integer> progress
     );
     void celebrate(Plugin owner, String namespace, Player player, String key);
+
+    /** Explicit private toast; old implementations fail closed rather than broadcasting. */
+    default void celebratePrivate(Plugin owner, String namespace, Player player, String key) {
+        throw new UnsupportedOperationException("Private celebrations are unavailable");
+    }
 
     /** Legacy entry points reject ownerless writes rather than bypassing namespace ownership. */
     @Deprecated

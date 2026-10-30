@@ -1,19 +1,26 @@
 package io.github.badgersmc.advancements.pilot;
 
 import java.util.List;
+import java.util.Set;
 import org.bukkit.inventory.ItemStack;
 import io.github.badgersmc.advancements.pilot.ProjectionService.Node;
 
 /** Validated provider input snapshot used to rebuild a disposed UAA tab. */
-record Registration(ItemStack icon, List<Node> definitions) {
+record Registration(ItemStack icon, List<Node> definitions, Set<String> privateKeys) {
     static Registration validated(
         String namespace,
         ItemStack icon,
         List<Node> definitions
     ) {
+        return validated(namespace, icon, definitions, Set.of());
+    }
+
+    static Registration validated(String namespace, ItemStack icon, List<Node> definitions, Set<String> privateKeys) {
         validateInputs(namespace, icon, definitions);
-        Registration registration = new Registration(icon.clone(), List.copyOf(definitions));
+        if (privateKeys == null) throw new IllegalArgumentException("Missing private keys");
+        Registration registration = new Registration(icon.clone(), List.copyOf(definitions), Set.copyOf(privateKeys));
         ProjectionChecks.validateDefinitions(registration.definitions());
+        ProjectionChecks.validatePrivateNodes(registration.definitions(), registration.privateKeys());
         validateDisplays(registration);
         return registration;
     }
