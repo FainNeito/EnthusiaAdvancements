@@ -1,0 +1,21 @@
+# Fail-closed hidden projection — SPEAR draft
+
+Base: FainNeito/EnthusiaAdvancements a0a33b2399496cfa8909429f7168907324940bad. UAA 2.8.1 compile API; public 2.8.2 reference source and binary show positive progress reveals HiddenVisibility, visibility-dispatch exceptions default to visible, and packet-construction exceptions can leave previous-team entries in the shared map. The actual deployed JAR and native packet/client behavior remain unverified.
+
+REQ-PRIVATE-001: WHEN a provider explicitly defines a private leaf node, THE SYSTEM SHALL include it in a single-player team's outgoing update only after the owner supplied a complete authoritative 1000/1000 snapshot for that viewer and the outgoing projection is complete. Zero, partial, missing, invalid, stale, multi-member and error states SHALL fail closed. Hidden nodes SHALL NOT have children. A new empty snapshot removes prior eligibility before any tab display. Private progress is packet-only and SHALL NOT update UAA progression or emit its server-wide progression event. Server-owned ephemeral eligibility is cleared at quit, tree removal and restart.
+
+REQ-PRIVATE-002: Each private node SHALL remove any stale entry of its own wrapper from a reused packet map before testing eligibility; errors SHALL clear the outgoing map rather than send potentially stale private metadata. Never rely on UAA HiddenVisibility exception fallback. Preserve old Node constructor binary descriptors and ordinary-node projection behavior.
+
+REQ-PRIVATE-003: Public celebration SHALL refuse private nodes. A separate owner-authorized private celebration MAY emit only the earner's toast, never server chat or Discord; joins and reprojection stay silent. Challenge sound/client behavior remains separately unverified.
+
+TASK-PRIVATE-001: Implement and test ABI descriptors, private leaf validation, fail-closed snapshot/quit/team handling, reused-map scrubbing and exception paths; local compile/test and exact-head review. Native runtime packet/client, deployment and compatibility checks are separate. Project-local EARS/state helpers absent; manual SPEAR evidence. No production, TEST or clients.
+
+## Local proof and remaining gates
+
+The first explicit private-node contract test failed compilation against the original API. An initial implementation added a record component, but the existing `NodeApiCompatibilityTest` rejected the changed record shape; it was replaced with a separate default-fail-closed registration method, leaving the original record and four constructor descriptors unchanged. A full-suite run also caught a null-check error on immutable sets; the validation was corrected. Local Java 25 `mvn clean verify` now passes 53 tests with no failures, errors or skips. Tests cover existing ABI, private-leaf validation, reused-map scrubbing, visibility failures, single-player eligibility, empty/partial snapshots, session revocation and private-only toast dispatch. Packet wrappers and players in those tests are mocks; no live packet/client guarantee is claimed.
+
+The producer must call `registerTreeWithPrivateNodes` without falling back to a public registration when it is missing, and supply complete authoritative snapshots, including empty ones. The implementation removes stale private wrappers before each visibility decision and clears the outgoing map on an inability to identify the wrapper; real UAA and client packet behavior still require verification against the exact deployed runtime and separately authorized isolated client. No user-specific hidden title, reward or audio is included. Build/toolchain setup failures are not behavioral red evidence. No deployment, TEST, clients or production operations occurred.
+
+Source review found UAA `setProgression` emits a server-wide progression event. Private nodes therefore never update UAA progress: after the provider supplies a durable complete snapshot, their authorized outgoing packet alone carries completion. This preserves zero UAA progression and avoids both stale UAA progress and that event; it still requires actual runtime and client verification.
+
+A service-level regression exercises both complete and empty snapshots, verifies a tab refresh is requested, and verifies the private node never calls `setProgression`; it uses mocks and does not prove packet serialization.

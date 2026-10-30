@@ -13,6 +13,11 @@ import java.util.Map;
 import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
@@ -49,6 +54,14 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
                 this,
                 ServicePriority.Normal
             );
+        getServer().getPluginManager().registerEvents(new Listener() {
+            @EventHandler(priority = EventPriority.LOWEST) public void onJoin(PlayerJoinEvent event) {
+                trees.values().forEach(tree -> revokePrivate(tree.nodes(), event.getPlayer().getUniqueId()));
+            }
+            @EventHandler public void onQuit(PlayerQuitEvent event) {
+                trees.values().forEach(tree -> revokePrivate(tree.nodes(), event.getPlayer().getUniqueId()));
+            }
+        }, this);
         getLogger().info(
             "Projection-only pilot enabled. No default challenge trees or rewards are loaded."
         );
@@ -84,6 +97,16 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             icon,
             definitions
         );
+        replaceTree(owner, namespace, existing, registration);
+    }
+
+    @Override
+    public void registerTreeWithPrivateNodes(Plugin owner, String namespace, ItemStack icon, List<Node> definitions, java.util.Set<String> privateKeys) {
+        mainThread();
+        Objects.requireNonNull(owner, "Missing owner");
+        Tree existing = trees.get(namespace);
+        assertTreeOwner(existing, owner);
+        Registration registration = Registration.validated(namespace, icon, definitions, privateKeys);
         replaceTree(owner, namespace, existing, registration);
     }
 
@@ -170,7 +193,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         RootAdvancement root = rootAdvancement(tab, registration.icon());
         Map<String, BaseAdvancement> nodes = new LinkedHashMap<>();
         for (Node definition : registration.definitions()) {
-            nodes.put(definition.key(), createNode(definition, root, nodes));
+            nodes.put(definition.key(), createNode(definition, root, nodes, registration.privateKeys().contains(definition.key())));
         }
         tab.registerAdvancements(root, new HashSet<>(nodes.values()));
         return new Tree(owner, tab, root, nodes, registration);
@@ -196,18 +219,15 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
     private static BaseAdvancement createNode(
         Node definition,
         RootAdvancement root,
-        Map<String, BaseAdvancement> nodes
+        Map<String, BaseAdvancement> nodes,
+        boolean hidden
     ) {
         Advancement parent =
             definition.parentKey() == null
                 ? root
                 : nodes.get(definition.parentKey());
-        return new BaseAdvancement(
-            definition.key(),
-            nodeDisplay(definition),
-            parent,
-            100
-        );
+        if (hidden) return new PrivateAdvancement(definition.key(), nodeDisplay(definition), parent);
+        return new BaseAdvancement(definition.key(), nodeDisplay(definition), parent, 100);
     }
 
     static AdvancementDisplay nodeDisplay(Node definition) {
@@ -244,14 +264,34 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         mainThread();
         Tree tree = ownedTree(owner, namespace);
         if (tree == null) return;
-        // Snapshot and validate every entry before granting the root, showing a tab, or changing nodes.
-        Map<String, Integer> checked = ProjectionChecks.checkedProgress(
-            progress
-        );
+        // Invalidate session visibility before validation or any early return.
+        revokePrivate(tree.nodes(), player.getUniqueId());
+        Map<String, Integer> checked = ProjectionChecks.checkedProgress(progress);
         if (!ready(player)) return;
+        projectPrivate(tree.nodes(), player, checked);
         showTree(tree, player);
+        // Private progress is packet-only; explicitly schedule a refresh even when the tab is already shown.
+        if (tree.nodes().values().stream().anyMatch(node -> node instanceof PrivateAdvancement))
+            tree.tab().updateAdvancementsToTeam(player);
         for (var entry : checked.entrySet()) {
             projectNode(tree, player, entry.getKey(), entry.getValue());
+        }
+    }
+
+    static void revokePrivate(Map<String, BaseAdvancement> nodes, java.util.UUID playerId) {
+        for (BaseAdvancement node : nodes.values()) {
+            if (node instanceof PrivateAdvancement secret) secret.authorize(playerId, false);
+        }
+    }
+
+    static void projectPrivate(Map<String, BaseAdvancement> nodes, Player player, Map<String, Integer> progress) {
+        for (var entry : nodes.entrySet()) {
+            if (entry.getValue() instanceof PrivateAdvancement secret) {
+                boolean complete = progress.getOrDefault(entry.getKey(), 0) == 1000;
+                secret.authorize(player.getUniqueId(), complete);
+                // Do not write UAA progression: its update emits a server-wide plugin event.
+                // PrivateAdvancement.onUpdate sends 100 only for an authorized snapshot.
+            }
         }
     }
 
@@ -267,7 +307,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         int value
     ) {
         BaseAdvancement node = tree.nodes().get(key);
-        if (node == null || value < 0 || value > 1000) return;
+        if (node == null || node instanceof PrivateAdvancement || value < 0 || value > 1000) return;
         int clientValue = clientProgress(value);
         if (node.getProgression(player) != clientValue) {
             node.setProgression(player, clientValue, false);
@@ -306,7 +346,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Tree tree = ownedTree(owner, namespace);
         if (tree == null || !ready(player)) return;
         BaseAdvancement node = tree.nodes().get(key);
-        if (node == null || !node.isGranted(player)) return;
+        if (node == null || node instanceof PrivateAdvancement || !node.isGranted(player)) return;
         node.displayToastToPlayer(player);
         if (
             Boolean.FALSE.equals(
@@ -331,4 +371,15 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
                 .ifPresent(definition -> discord.announce(player, namespace, definition));
         }
     }
+    @Override
+    public void celebratePrivate(Plugin owner, String namespace, Player player, String key) {
+        mainThread();
+        Tree tree = ownedTree(owner, namespace);
+        if (tree == null || !ready(player)) return;
+        BaseAdvancement node = tree.nodes().get(key);
+        if (!(node instanceof PrivateAdvancement secret)) return;
+        if (!secret.isVisible(api.getTeamProgression(player))) return;
+        secret.displayToastToPlayer(player);
+    }
+
 }

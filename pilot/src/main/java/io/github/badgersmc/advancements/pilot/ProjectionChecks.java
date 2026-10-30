@@ -23,6 +23,17 @@ final class ProjectionChecks {
         }
     }
 
+    static void validatePrivateNodes(List<ProjectionService.Node> definitions, java.util.Set<String> privateKeys) {
+        if (privateKeys == null || privateKeys.stream().anyMatch(java.util.Objects::isNull)) throw new IllegalArgumentException("Invalid private keys");
+        var allKeys = new HashSet<String>();
+        for (var node : definitions) {
+            allKeys.add(node.key());
+            if (node.parentKey() != null && privateKeys.contains(node.parentKey()))
+                throw new IllegalArgumentException("Private nodes must be leaves: " + node.parentKey());
+        }
+        if (!allKeys.containsAll(privateKeys)) throw new IllegalArgumentException("Unknown private node");
+    }
+
     static Map<String, Integer> checkedProgress(Map<String, Integer> progress) {
         if (progress == null) throw new IllegalArgumentException("Missing progress map");
         Map<String, Integer> checked = new LinkedHashMap<>();
