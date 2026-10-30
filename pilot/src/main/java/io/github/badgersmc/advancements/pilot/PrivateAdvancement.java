@@ -24,8 +24,7 @@ final class PrivateAdvancement extends BaseAdvancement {
 
     @Override public boolean isVisible(TeamProgression team) {
         try {
-            return team != null && team.getSize() == 1 && eligible.contains(team.getAMember())
-                && getProgression(team) == 100;
+            return team != null && team.getSize() == 1 && eligible.contains(team.getAMember());
         } catch (Throwable failure) {
             return false;
         }

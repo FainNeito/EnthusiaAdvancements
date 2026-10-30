@@ -270,6 +270,9 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         if (!ready(player)) return;
         projectPrivate(tree.nodes(), player, checked);
         showTree(tree, player);
+        // Private progress is packet-only; explicitly schedule a refresh even when the tab is already shown.
+        if (tree.nodes().values().stream().anyMatch(node -> node instanceof PrivateAdvancement))
+            tree.tab().updateAdvancementsToTeam(player);
         for (var entry : checked.entrySet()) {
             projectNode(tree, player, entry.getKey(), entry.getValue());
         }
@@ -286,8 +289,8 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
             if (entry.getValue() instanceof PrivateAdvancement secret) {
                 boolean complete = progress.getOrDefault(entry.getKey(), 0) == 1000;
                 secret.authorize(player.getUniqueId(), complete);
-                int value = complete ? 100 : 0;
-                if (secret.getProgression(player) != value) secret.setProgression(player, value, false);
+                // Do not write UAA progression: its update emits a server-wide plugin event.
+                // PrivateAdvancement.onUpdate sends 100 only for an authorized snapshot.
             }
         }
     }

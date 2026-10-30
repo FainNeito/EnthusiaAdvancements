@@ -60,7 +60,6 @@ class PrivateProjectionTest {
         var player = UUID.randomUUID();
         when(team.getSize()).thenReturn(1);
         when(team.getAMember()).thenReturn(player);
-        doReturn(100).when(secret).getProgression(team);
         Map<AdvancementWrapper, Integer> packet = new HashMap<>();
         packet.put(wrapper, 100); packet.put(other, 42);
         secret.onUpdate(team, packet);
@@ -73,7 +72,7 @@ class PrivateProjectionTest {
         secret.onUpdate(team, packet);
         assertFalse(packet.containsKey(wrapper));
         when(team.getSize()).thenReturn(1);
-        doThrow(new IllegalStateException("visibility failure")).when(secret).getProgression(team);
+        when(team.getSize()).thenThrow(new IllegalStateException("visibility failure"));
         packet.put(wrapper, 100);
         secret.onUpdate(team, packet);
         assertFalse(packet.containsKey(wrapper));
@@ -90,9 +89,6 @@ class PrivateProjectionTest {
         var player = mock(org.bukkit.entity.Player.class);
         var id = UUID.randomUUID(); when(player.getUniqueId()).thenReturn(id);
         var team = mock(TeamProgression.class); when(team.getSize()).thenReturn(1); when(team.getAMember()).thenReturn(id);
-        doReturn(100).when(secret).getProgression(team);
-        doReturn(0).when(secret).getProgression(player);
-        doNothing().when(secret).setProgression(any(org.bukkit.entity.Player.class), anyInt(), eq(false));
         Map<String, com.fren_gor.ultimateAdvancementAPI.advancement.BaseAdvancement> nodes = Map.of("secret", secret);
         PilotPlugin.projectPrivate(nodes, player, Map.of("secret", 999));
         assertFalse(secret.isVisible(team));
@@ -104,7 +100,7 @@ class PrivateProjectionTest {
         assertFalse(secret.isVisible(team));
         PilotPlugin.projectPrivate(nodes, player, Map.of("secret", 1001));
         assertFalse(secret.isVisible(team));
-        verify(secret, atLeastOnce()).setProgression(player, 100, false);
+        verify(secret, never()).setProgression(any(org.bukkit.entity.Player.class), anyInt(), anyBoolean());
     }
 
 }
