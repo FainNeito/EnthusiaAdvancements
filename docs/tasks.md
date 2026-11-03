@@ -1,5 +1,7 @@
 # Tasks — CustomAdvancements Plugin
 
+- [ ] EA-WEBSITE-CATALOG (REQ-PILOT-WEB-CATALOG-001, REQ-PILOT-WEB-COMPLETIONS-002): Catalogue and opt-in individual projection carried onto main `296ed5e`; 51 pilot Maven tests passed locally. Review actual UAA runtime compatibility, bridge integration, network pin and a production-equivalent isolated scenario before deployment. Player completion bridge integration remains outstanding. See `docs/WEBSITE-CATALOG.md`.
+
 - [x] EA-KOTH-RETIRE (REQ-KOTH-RETIRE): Removed AxKoth build repository/API and capture listener; stored requirement tokens/layouts remain parseable, with retired progress, administrative grants and reward payloads blocked. Verified eKOTH projection remains unchanged. SPEAR helpers are absent; this manual record is authoritative. Prove: 19 targeted cases yielded exactly the two new progression/reward failures before implementation. Refine: clean renderer test/shadowJar and dependency report passed with 53 cases, zero failures and no Ax dependencies; existing saved tree parsing is covered. Exact-head hosted CI, canonical network pin and deferred server acceptance remain separate gates. No server changes or player-data migration.
 
 > Version: 1.0 | Last Updated: 2026-04-02

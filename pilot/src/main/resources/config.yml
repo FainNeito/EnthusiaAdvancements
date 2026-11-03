@@ -1,5 +1,10 @@
 # Optional DiscordSRV announcement for explicit live celebrate(...) calls.
 # Progress projections and historical backfill never post to Discord.
+website:
+  # Console-only helper for an isolated local restore. Never enable on production.
+  local-catalogue-export: false
+  # Requested loaded individuals only; shared teams and offline players remain unknown.
+  public-player-completions: false
 discord:
   enabled: false
   channel: awards
