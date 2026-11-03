@@ -24,7 +24,21 @@ final class MinecraftAdvancementColors {
             result[i] = original[i].duplicate();
             recolor(result[i], frame.getColor(), replacement);
         }
+        // UAA constructs the message as player text, opening bracket, title, closing bracket.
+        // The title may contain explicit legacy or RGB colors, which otherwise override the frame.
+        if (announcement != null && !"holidays".equals(announcement.namespace())
+                && result.length == 4 && "[".equals(result[1].toPlainText())
+                && "]".equals(result[3].toPlainText())) {
+            recolorTitle(result[2], replacement);
+        }
         return result;
+    }
+
+    private static void recolorTitle(BaseComponent component, ChatColor replacement) {
+        component.setColor(replacement);
+        if (component.getExtra() != null) {
+            for (BaseComponent child : component.getExtra()) recolorTitle(child, replacement);
+        }
     }
 
     private static ChatColor palette(AdvancementFrameType frame, Announcement announcement) {
