@@ -1,6 +1,7 @@
 # Website achievement catalogue — local SPEAR
 
-Base: canonical main 2736261. No PR or publication is authorized.
+Original base: canonical main 2736261. The changes have been carried onto
+current canonical main 296ed5e for review; no publication or deployment follows.
 The deployed renderer is the projection-only pilot. Export only successfully
 registered provider definitions through the additive websiteAchievements() API.
 The legacy Kotlin distribution is not this runtime and remains unchanged.
@@ -35,4 +36,8 @@ Canonical pilot Maven verify now passes 45 tests, including public projection
 and atomic local catalogue output. Verified against the compiled UAA 2.8.1 API;
 the website offline reader independently checks its SQLite storage shape.
 This is unmerged local source/build proof only. No server installation,
-configuration activation, console command invocation, PR or push occurred.
+configuration activation or console command invocation occurred. On the updated
+base, `mvn -o -f pilot/pom.xml verify` passed 51 tests with no failures or
+skips. The live bridge, companion runtime, network pin and real player data have
+not been verified. The website bridge currently consumes the catalogue API;
+player completion export is not yet connected to it.

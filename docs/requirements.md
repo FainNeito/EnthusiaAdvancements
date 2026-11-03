@@ -256,3 +256,9 @@ WHEN a provider title or description contains legacy RGB or formatting codes THE
 
 ### REQ-PILOT-WATCHER-BRACKETS-002
 WHEN announcing holidays:seen_the_watcher, holidays:dont_blink or holidays:forgotten_melody THE SYSTEM SHALL retain the bracket characters and colour the frame-coloured announcement components using the Watcher title colour, preserving explicit title/description colours, hover and click events and shared display data. Other advancements SHALL retain the existing frame-colour mapping. Missing title data SHALL retain the existing mapping.
+
+### REQ-PILOT-WEB-CATALOG-001
+WHEN the bridge requests a public catalogue on the server thread THE SYSTEM SHALL return only currently registered provider definitions, without granting advancements or inventing rewards or completion totals.
+
+### REQ-PILOT-WEB-COMPLETIONS-002
+WHERE public player completion export is enabled WHEN bounded individual UUIDs are requested THE SYSTEM SHALL return only already-loaded online players with individual progression; offline, unknown and shared-team players SHALL remain unknown, and the export SHALL NOT grant or load progression.
