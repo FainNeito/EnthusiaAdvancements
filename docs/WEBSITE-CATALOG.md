@@ -41,3 +41,5 @@ base, `mvn -o -f pilot/pom.xml verify` passed 51 tests with no failures or
 skips. The live bridge, companion runtime, network pin and real player data have
 not been verified. The website bridge currently consumes the catalogue API;
 player completion export is not yet connected to it.
+
+The draft also incorporates fork main `a0a33b2399496cfa8909429f7168907324940bad` without replacing the fork's palette changes. The combined branch passed 54 tests with no failures or skips using an offline Maven clean verify. This is local source verification only; it does not verify the loaded production plugin.
