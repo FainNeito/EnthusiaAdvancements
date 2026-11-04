@@ -58,6 +58,15 @@ public interface ProjectionService {
     );
     void celebrate(Plugin owner, String namespace, Player player, String key);
 
+    /**
+     * Celebrates a granted node. With {@code announce} false only the player's toast is
+     * shown: no chat line and no Discord post. Added in 1.0.0-pilot.7; providers that
+     * must run on older pilots should look this method up before calling it.
+     */
+    default void celebrate(Plugin owner, String namespace, Player player, String key, boolean announce) {
+        celebrate(owner, namespace, player, key);
+    }
+
     /** Legacy entry points reject ownerless writes rather than bypassing namespace ownership. */
     @Deprecated
     default void project(

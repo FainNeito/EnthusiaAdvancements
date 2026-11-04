@@ -348,6 +348,17 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         Player player,
         String key
     ) {
+        celebrate(owner, namespace, player, key, true);
+    }
+
+    @Override
+    public void celebrate(
+        Plugin owner,
+        String namespace,
+        Player player,
+        String key,
+        boolean announce
+    ) {
         mainThread();
         Tree tree = ownedTree(owner, namespace);
         if (tree == null || !ready(player)) return;
@@ -355,6 +366,7 @@ public final class PilotPlugin extends JavaPlugin implements ProjectionService {
         if (node == null || !node.isGranted(player)) return;
         var toastFrame = LastWatchToastPolicy.toastFrame(namespace, key, node.getDisplay().getFrame());
         LastWatchToastPolicy.show(node, player, AdvancementUtils::displayToast, toastFrame);
+        if (!announce) return;
         if (
             Boolean.FALSE.equals(
                 player
