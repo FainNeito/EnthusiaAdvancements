@@ -262,3 +262,6 @@ WHEN the bridge requests a public catalogue on the server thread THE SYSTEM SHAL
 
 ### REQ-PILOT-WEB-COMPLETIONS-002
 WHERE public player completion export is enabled WHEN bounded individual UUIDs are requested THE SYSTEM SHALL return only already-loaded online players with individual progression; offline, unknown and shared-team players SHALL remain unknown, and the export SHALL NOT grant or load progression.
+
+### REQ-PILOT-QUIET-CELEBRATION-001
+WHEN a provider celebrates a granted node with announcement disabled THE SYSTEM SHALL show that player's completion toast exactly as a normal celebration would, and SHALL NOT send the chat announcement to any player or post a Discord announcement. Ownership, readiness and granted checks SHALL be identical to a normal celebration, a celebration with announcement enabled SHALL behave exactly as the existing four-argument call, and providers built against the earlier API SHALL keep working unchanged.
